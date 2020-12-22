@@ -13,10 +13,7 @@ namespace swc {
 namespace codegen {
 
 static const std::map<std::string, std::string> DTYPE_MPI_DATATYPE_MAP = {
-    {"int", "MPI_INT"},
-    {"float", "MPI_FLOAT"},
-    {"double", "MPI_DOUBLE"}
-};
+    {"int", "MPI_INT"}, {"float", "MPI_FLOAT"}, {"double", "MPI_DOUBLE"}};
 
 bool isParallel(TensorNode *node) {
     Label *label = node->getLabel();
@@ -69,18 +66,18 @@ void ParallelCodegen::initMakefileBuilder() {
     Codegen::initMakefileBuilder();
     makefile_builder_.setCXXCompiler("mpic++");
     auto config = graph_->getConfig();
-    std::string run_cmd = "mpirun -n "  + std::to_string(config.mpi_size) 
-        +" " + makefile_builder_.getExecutable();
+    std::string run_cmd = "mpirun -n " + std::to_string(config.mpi_size) + " " +
+                          makefile_builder_.getExecutable();
     makefile_builder_.setRunCmd(run_cmd);
 
-
-    //tmp for sw x86
-    swmakefile_builder_.setCXXCompiler("~/3rdParty/mvapich2.2/mpi2_gcc4-8/bin/mpic++");
-    std::string sw_run_cmd = "bsub -q q_x86_share -N "  + std::to_string(config.mpi_size) 
-        + " -np 1 " + "-o run_log.txt "
-        + "./" + makefile_builder_.getExecutable();
+    // tmp for sw x86
+    swmakefile_builder_.setCXXCompiler(
+        "~/3rdParty/mvapich2.2/mpi2_gcc4-8/bin/mpic++");
+    std::string sw_run_cmd = "bsub -q q_x86_share -N " +
+                             std::to_string(config.mpi_size) + " -np 1 " +
+                             "-o run_log.txt " + "./" +
+                             makefile_builder_.getExecutable();
     swmakefile_builder_.setRunCmd(sw_run_cmd);
-
 }
 
 void ParallelCodegen::emitHeader() {
@@ -106,7 +103,7 @@ void ParallelCodegen::emitMPIInit() {
     writer_ << "std::cout << \"process \" << rank << \" of \" << nprocs << \" "
                "run on \" << proc_name << std::endl;\n";
 
-    if(config_.mkldnn)
+    if (config_.mkldnn)
         emitMKLDNNInit();
 }
 void ParallelCodegen::emitMPIFinalize() { writer_ << "MPI_Finalize();\n"; }
@@ -120,67 +117,64 @@ void ParallelCodegen::emitExecute() {
         std::string data_var;
 
         // in benchmark mode, we suppose parallel io is supported, then,
-        // original label and data node may be eliminated in IRGraph::elimRedundantScatter()
-        if(!config_.benchmark) {
-             if(!tensors_name_map_.count(label->getTensor())) {
-                SWLOG_DEBUG(10) << "label tensor " << label->name() << " " << label->getTensor() << " not in map ...\n";
+        // original label and data node may be eliminated in
+        // IRGraph::elimRedundantScatter()
+        if (!config_.benchmark) {
+            if (!tensors_name_map_.count(label->getTensor())) {
+                SWLOG_DEBUG(10) << "label tensor " << label->name() << " "
+                                << label->getTensor() << " not in map ...\n";
                 exit(0);
             }
-            if(!tensors_name_map_.count(data->getTensor())) {
-                SWLOG_DEBUG(10) << "data tensor " << data->name() << " " << data->getTensor() << " not in map ...\n";
+            if (!tensors_name_map_.count(data->getTensor())) {
+                SWLOG_DEBUG(10) << "data tensor " << data->name() << " "
+                                << data->getTensor() << " not in map ...\n";
                 exit(0);
             }
 
             label_var = tensors_name_map_.at(label->getTensor());
             data_var = tensors_name_map_.at(data->getTensor());
         }
-       
 
         TrainingConfig tconfig = config_.train_config;
         tconfig.batch = data->getDims()[0];
 
-        if(!config_.benchmark) {
+        if (!config_.benchmark) {
             writer_ << "std::string train_data_file = \""
                     << tconfig.train_data_file << "\";\n";
             writer_ << "DataLoader loader("
-                << "train_data_file, "
-                << getBytesProtoString(tconfig.label_bytes) << ", "
-                << getBytesProtoString(tconfig.data_bytes) << ", "
-                << tconfig.max_epoch << ", "
-                << tconfig.train_data_samples << ", "
-                << getInitialLizerString(label->getDims()) << ", "
-                << getInitialLizerString(data->getDims())
-                << ");\n";
+                    << "train_data_file, "
+                    << getBytesProtoString(tconfig.label_bytes) << ", "
+                    << getBytesProtoString(tconfig.data_bytes) << ", "
+                    << tconfig.max_epoch << ", " << tconfig.train_data_samples
+                    << ", " << getInitializerString(label->getDims()) << ", "
+                    << getInitializerString(data->getDims()) << ");\n";
         }
 
-        size_t max_iter = tconfig.max_iters==0 ?
-                (tconfig.train_data_samples * tconfig.max_epoch / tconfig.batch) : tconfig.max_iters;
-        writer_ << "size_t max_iter = " << max_iter
-                << ";\n";
+        size_t max_iter = tconfig.max_iters == 0
+                              ? (tconfig.train_data_samples *
+                                 tconfig.max_epoch / tconfig.batch)
+                              : tconfig.max_iters;
+        writer_ << "size_t max_iter = " << max_iter << ";\n";
         writer_ << "size_t iter = 0; "
                 << "\n\n";
 
-        writer_ << "gettimeofday(&ts, NULL);\n"; 
-        
+        writer_ << "gettimeofday(&ts, NULL);\n";
+
         writer_ << "while(iter < max_iter) {\n";
         writer_.indentInc();
 
         writer_ << "if(rank == 0) {\n";
         writer_.indentInc();
 
-        
-        if(!config_.benchmark) {
+        if (!config_.benchmark) {
             writer_ << "loader.next(" << label_var << ", " << data_var
-                << ");\n";
+                    << ");\n";
         } else {
             writer_ << "// batch load disabled in benchmark mode\n";
         }
 
-        
-
         writer_.indentDec();
         writer_ << "} // if rank\n";
-
     }
 
     emitFuncCalls();
@@ -191,7 +185,7 @@ void ParallelCodegen::emitExecute() {
         writer_ << "iter++;\n";
 
         // if do benchmark, comment save snapshot and print
-        if(!config_.benchmark) {
+        if (!config_.benchmark) {
 
             if (config_.train_config.snapshot) {
                 writer_ << "if(rank == 0) {\n";
@@ -203,7 +197,7 @@ void ParallelCodegen::emitExecute() {
                 writer_ << "} // if rank\n";
             }
 
-            if(config_.train_config.display) {
+            if (config_.train_config.display) {
                 writer_ << "if(rank == 0) {\n";
                 writer_.indentInc();
 
@@ -212,24 +206,26 @@ void ParallelCodegen::emitExecute() {
                 writer_.indentDec();
                 writer_ << "} // if rank\n";
             }
-        }else {
-            writer_ << "// rank 0 emitSaveSnapshot() and emitPrintGraphOutputs() disable in benchmark mode\n";
+        } else {
+            writer_ << "// rank 0 emitSaveSnapshot() and "
+                       "emitPrintGraphOutputs() disable in benchmark mode\n";
         }
 
         writer_.indentDec();
 
         writer_ << "} //while\n";
 
-        writer_ << "gettimeofday(&te, NULL);\n"; 
-        writer_ << "double time = TIME_MS(ts, te);\n"; 
+        writer_ << "gettimeofday(&te, NULL);\n";
+        writer_ << "double time = TIME_MS(ts, te);\n";
         writer_ << "if(rank == 0) {\n";
         writer_.indentInc();
-        writer_ << R"(cout << "Rank " << rank << " : time cost (ms)\n" << time << endl;)" << "\n";
+        writer_
+            << R"(cout << "Rank " << rank << " : time cost (ms)\n" << time << endl;)"
+            << "\n";
         writer_.indentDec();
         writer_ << "} // if rank\n";
     }
     SWLOG_DEBUG(4) << "begin emitExecute ...\n";
-
 }
 
 void ParallelCodegen::allocateMemAddr() {
@@ -250,8 +246,7 @@ void ParallelCodegen::allocateMemAddr() {
                 SWLOG_DEBUG(1)
                     << "allocateMemAddr " << tnode->name() << " "
                     << "(" << tensor << ", " << size << ")"
-                    << " as " << buf_name
-                    << " on dev(" << dev.rank << ", "
+                    << " as " << buf_name << " on dev(" << dev.rank << ", "
                     << static_cast<int>(dev.type) << ", " << dev.id << ")."
                     << "\n";
 
@@ -478,21 +473,23 @@ void ParallelCodegen::masterWorkerDispatcher(OpNode *op,
 
         size_t out_count = out_tensor->size();
 
-
         // TODO: -1 BroadcastOp
-        if(axis == -1) {
-            if(side == 0) {
-                masterWriter_ << "// rank 0 memcpy from " << fname << " to " << tname
-                        << "\n";
+        if (axis == -1) {
+            if (side == 0) {
+                masterWriter_ << "// rank 0 memcpy from " << fname << " to "
+                              << tname << "\n";
                 masterWriter_ << tname << " = " << fname << ";\n";
-                masterWriter_ << "MPI_Bcast(" << tname << ", " << out_count << ", "
-                        << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-                        << "0, " << "MPI_COMM_WORLD);\n";
-            }
-            else {
-                workerWriter_ << "MPI_Bcast(" << tname << ", " << out_count << ", "
-                        << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-                        << "0, " << "MPI_COMM_WORLD);\n";
+                masterWriter_ << "MPI_Bcast(" << tname << ", " << out_count
+                              << ", " << DTYPE_MPI_DATATYPE_MAP.at(dtype)
+                              << ", "
+                              << "0, "
+                              << "MPI_COMM_WORLD);\n";
+            } else {
+                workerWriter_ << "MPI_Bcast(" << tname << ", " << out_count
+                              << ", " << DTYPE_MPI_DATATYPE_MAP.at(dtype)
+                              << ", "
+                              << "0, "
+                              << "MPI_COMM_WORLD);\n";
             }
 
             return;
@@ -500,72 +497,71 @@ void ParallelCodegen::masterWorkerDispatcher(OpNode *op,
 
         int tag = getMPISendRecvTag(out_tensor);
 
-        size_t sendType_count = 1, sendType_num=1, sendType_stride = 1;
-        for(int i=0; i<axis; i++)
+        size_t sendType_count = 1, sendType_num = 1, sendType_stride = 1;
+        for (int i = 0; i < axis; i++)
             sendType_count *= idims[i];
-        for(int i=axis; i<n; i++)
-            sendType_stride*= idims[i];
+        for (int i = axis; i < n; i++)
+            sendType_stride *= idims[i];
         sendType_num = sendType_stride / degree;
 
-
-        std::string sendType = UniqueName(fname+"_sendType"); 
-        std::string sendOffset = UniqueName(fname+"_sendOffset"); 
+        std::string sendType = UniqueName(fname + "_sendType");
+        std::string sendOffset = UniqueName(fname + "_sendOffset");
         if (side == 0) {
             masterWriter_ << "MPI_Datatype " << sendType << ";\n"
-                << "MPI_Type_vector("
-                << sendType_count << ", "
-                << sendType_num<< ", "
-                << sendType_stride<< ", "
-                << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-                << "&"<< sendType << ");\n"
-                << "MPI_Type_commit(&" << sendType << ");\n";
+                          << "MPI_Type_vector(" << sendType_count << ", "
+                          << sendType_num << ", " << sendType_stride << ", "
+                          << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
+                          << "&" << sendType << ");\n"
+                          << "MPI_Type_commit(&" << sendType << ");\n";
 
             masterWriter_ << "size_t " << sendOffset << " = 0;\n";
             masterWriter_ << "for(int r=1; r<" << degree << "; r++) {\n";
             masterWriter_.indentInc();
             masterWriter_ << sendOffset << " = " << sendType_num << " * r;\n";
             masterWriter_ << "MPI_Send(" << fname << "+" << sendOffset << ", "
-            << "1, " << sendType << ", "
-            << "r, " << tag << ",  MPI_COMM_WORLD);\n";
+                          << "1, " << sendType << ", "
+                          << "r, " << tag << ",  MPI_COMM_WORLD);\n";
             masterWriter_.indentDec();
             masterWriter_ << "} //for \n";
 
-            masterWriter_ << "// rank 0 memcpy from " << fname << " to " << tname
-                    << "\n";
-            if(!config_.benchmark) { 
-                if(axis == 0) {
+            masterWriter_ << "// rank 0 memcpy from " << fname << " to "
+                          << tname << "\n";
+            if (!config_.benchmark) {
+                if (axis == 0) {
                     masterWriter_ << tname << " = " << fname << ";\n";
-                }else {
-                    masterWriter_ << "MPI_Sendrecv(" << fname << ", "
-                        << "1, " << sendType << ", " << "0, " << tag << ", "
-                        << tname << ", " << out_count << ", "
-                        << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-                        << "0, " << tag
-                        << ",  MPI_COMM_WORLD, &status);\n";
+                } else {
+                    masterWriter_
+                        << "MPI_Sendrecv(" << fname << ", "
+                        << "1, " << sendType << ", "
+                        << "0, " << tag << ", " << tname << ", " << out_count
+                        << ", " << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
+                        << "0, " << tag << ",  MPI_COMM_WORLD, &status);\n";
                 }
-            }else {
-                    masterWriter_ << "// rank 0 memcpy or Self Sendrecv skipped in benchmark mode;\n";
+            } else {
+                masterWriter_ << "// rank 0 memcpy or Self Sendrecv skipped in "
+                                 "benchmark mode;\n";
             }
             /*
             // masterWriter_ << "for(int r=1; r<=" << degree <<"; r++) {\n";
             masterWriter_ << "for(int r=1; r<" << degree << "; r++) {\n";
             masterWriter_.indentInc();
-            masterWriter_ << "MPI_Send(" << fname << "+r*" << offset << ", " << size
+            masterWriter_ << "MPI_Send(" << fname << "+r*" << offset << ", " <<
+            size
                     << ", "
                     << "MPI_CHAR, r, " << tag << ",  MPI_COMM_WORLD);\n";
             masterWriter_.indentDec();
             masterWriter_ << "} //for \n";
 
-            masterWriter_ << "// rank 0 memcpy from " << fname << " to " << tname
+            masterWriter_ << "// rank 0 memcpy from " << fname << " to " <<
+            tname
                     << "\n";
             masterWriter_ << "memcpy(" << tname << ", " << fname << ", " << size
                     << ");\n";
             */
         } else {
             workerWriter_ << "MPI_Recv(" << tname << ", " << out_count << ", "
-                    << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-                    << "0, " << tag
-                    << ",  MPI_COMM_WORLD, &status);\n";
+                          << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
+                          << "0, " << tag << ",  MPI_COMM_WORLD, &status);\n";
             /*
             workerWriter_ << "MPI_Recv(" << tname << ", " << size << ", "
                     << "MPI_CHAR, 0, " << tag
@@ -590,19 +586,19 @@ void ParallelCodegen::masterWorkerDispatcher(OpNode *op,
         // -1: replicate -2: reduce
         // size_t offset = (axis < 0) ? 0 : in_tensor->size();
 
-        SWLOG_DEBUG(2) << "GatherOp " << op->name() << " axis=" << axis << " degree=" << degree
-                       << "\n";
+        SWLOG_DEBUG(2) << "GatherOp " << op->name() << " axis=" << axis
+                       << " degree=" << degree << "\n";
 
         int tag = getMPISendRecvTag(in_tensor);
 
         // reduce
-        if(axis == -2) {
+        if (axis == -2) {
             size_t count = in_tensor->size();
             std::string dtype = getTypeString(in_tensor);
 
-            writer_ << "MPI_Reduce(" << fname << ", " << tname << ", "
-                << count << ", " << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-                << "MPI_SUM, " << 0 << ", MPI_COMM_WORLD);\n";
+            writer_ << "MPI_Reduce(" << fname << ", " << tname << ", " << count
+                    << ", " << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
+                    << "MPI_SUM, " << 0 << ", MPI_COMM_WORLD);\n";
             return;
         }
 
@@ -612,52 +608,52 @@ void ParallelCodegen::masterWorkerDispatcher(OpNode *op,
         std::string dtype = getTypeString(in_tensor);
         size_t in_count = in_tensor->size();
 
-        size_t recvType_count = 1, recvType_num=1, recvType_stride = 1;
-        for(int i=0; i<axis; i++)
+        size_t recvType_count = 1, recvType_num = 1, recvType_stride = 1;
+        for (int i = 0; i < axis; i++)
             recvType_count *= odims[i];
-        for(int i=axis; i<n; i++)
-            recvType_stride*= odims[i];
+        for (int i = axis; i < n; i++)
+            recvType_stride *= odims[i];
         recvType_num = recvType_stride / degree;
 
         std::string recvType = UniqueName(tname + "_recvType");
         std::string recvOffset = UniqueName(tname + "_recvOffset");
         if (side == 0) {
             masterWriter_ << "MPI_Datatype " << recvType << ";\n"
-            << "MPI_Type_vector("
-            << recvType_count << ", "
-            << recvType_num<< ", "
-            << recvType_stride<< ", "
-            << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-            << "&" << recvType << ");\n"
-            <<"MPI_Type_commit(&"<< recvType << ");\n";
+                          << "MPI_Type_vector(" << recvType_count << ", "
+                          << recvType_num << ", " << recvType_stride << ", "
+                          << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
+                          << "&" << recvType << ");\n"
+                          << "MPI_Type_commit(&" << recvType << ");\n";
 
             masterWriter_ << "size_t " << recvOffset << " = 0;\n";
             masterWriter_ << "for(int r=1; r<" << degree << "; r++) {\n";
             masterWriter_.indentInc();
             masterWriter_ << recvOffset << " = " << recvType_num << " * r;\n";
             masterWriter_ << "MPI_Recv(" << tname << "+" << recvOffset << ", "
-            << "1, " << recvType << ", "
-            << "r, " << tag << ",  MPI_COMM_WORLD, &status);\n";
+                          << "1, " << recvType << ", "
+                          << "r, " << tag << ",  MPI_COMM_WORLD, &status);\n";
             masterWriter_.indentDec();
             masterWriter_ << "} //for \n";
 
             masterWriter_ << "// rank 0 memcpy in " << fname << " to " << tname
-                    << "\n";
-            if(!config_.benchmark) { 
-                masterWriter_ << "MPI_Sendrecv(" << fname << ", "
-                        << in_count << ", "
-                        << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-                        << "0, " << tag << ", "
-                        << tname << ", "
-                        << "1, " << recvType << ", " << "0, " << tag << ", "
-                        << "MPI_COMM_WORLD, &status);\n";
-            }else {
-                    masterWriter_ << "// rank 0 memcpy or Self Sendrecv skipped in benchmark mode;\n";
+                          << "\n";
+            if (!config_.benchmark) {
+                masterWriter_ << "MPI_Sendrecv(" << fname << ", " << in_count
+                              << ", " << DTYPE_MPI_DATATYPE_MAP.at(dtype)
+                              << ", "
+                              << "0, " << tag << ", " << tname << ", "
+                              << "1, " << recvType << ", "
+                              << "0, " << tag << ", "
+                              << "MPI_COMM_WORLD, &status);\n";
+            } else {
+                masterWriter_ << "// rank 0 memcpy or Self Sendrecv skipped in "
+                                 "benchmark mode;\n";
             }
             /*
             masterWriter_ << "for(int r=1; r<" << degree << "; r++) {\n";
             masterWriter_.indentInc();
-            masterWriter_ << "MPI_Recv(" << tname << "+r*" << offset << ", " << size
+            masterWriter_ << "MPI_Recv(" << tname << "+r*" << offset << ", " <<
+            size
                     << ", "
                     << "MPI_CHAR, r, " << tag
                     << ",  MPI_COMM_WORLD, &status);\n";
@@ -671,9 +667,8 @@ void ParallelCodegen::masterWorkerDispatcher(OpNode *op,
             */
         } else {
             workerWriter_ << "MPI_Send(" << fname << ", " << in_count << ", "
-                    << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-                    << "0, " << tag
-                    << ",  MPI_COMM_WORLD);\n";
+                          << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
+                          << "0, " << tag << ",  MPI_COMM_WORLD);\n";
             /*
             workerWriter_ << "MPI_Send(" << fname << ", " << size << ", "
                     << "MPI_CHAR, 0, " << tag << ",  MPI_COMM_WORLD);\n";
@@ -683,13 +678,13 @@ void ParallelCodegen::masterWorkerDispatcher(OpNode *op,
 }
 
 void ParallelCodegen::transformOpDispatcher(OpNode *node) {
-    auto *transform = dynamic_cast<TransformOp*>(node->getOp());
+    auto *transform = dynamic_cast<TransformOp *>(node->getOp());
     int ki = transform->getPreAxis();
     int ko = transform->getPostAxis();
     int p = transform->getDegree();
 
-    writer_ << "// " << node->name() << "transform parallel strategy "
-            << ki << "->" << ko << "\n";
+    writer_ << "// " << node->name() << "transform parallel strategy " << ki
+            << "->" << ko << "\n";
 
     auto *in = ((TensorNode *)node->getParentNode(0));
     auto *in_tensor = in->getTensor();
@@ -708,63 +703,61 @@ void ParallelCodegen::transformOpDispatcher(OpNode *node) {
     auto odims = out_tensor->getDims();
     int n = in_tensor->getNDim();
 
-    SWLOG_DEBUG(4)<< "// " << node->name() << " n=" << n << " transform parallel strategy "
-            << ki << "->" << ko << "\n";
+    SWLOG_DEBUG(4) << "// " << node->name() << " n=" << n
+                   << " transform parallel strategy " << ki << "->" << ko
+                   << "\n";
 
-    if(ki>=0 && ko>=0) {
+    if (ki >= 0 && ko >= 0) {
 
-        if(config_.comm_op_annotation)
+        if (config_.comm_op_annotation)
             writer_ << "/*\n";
 
-        assert(in_count == out_count && "in_tensor size() inequal to out_tensor");
+        assert(in_count == out_count &&
+               "in_tensor size() inequal to out_tensor");
 
-        assert((ki>=0 && ki<n && ko>=0 && ko<n) && "illegal strategy");
+        assert((ki >= 0 && ki < n && ko >= 0 && ko < n) && "illegal strategy");
         assert((ki != ko) && "same in/out strategy");
 
-        size_t sendType_count = 1, sendType_num=1, sendType_stride = 1;
-        for(int i=0; i<ko; i++)
+        size_t sendType_count = 1, sendType_num = 1, sendType_stride = 1;
+        for (int i = 0; i < ko; i++)
             sendType_count *= idims[i];
-        for(int i=ko; i<n; i++)
-            sendType_stride*= idims[i];
+        for (int i = ko; i < n; i++)
+            sendType_stride *= idims[i];
         sendType_num = sendType_stride / p;
 
-        std::string sendType = UniqueName(fname+"_sendType"); 
+        std::string sendType = UniqueName(fname + "_sendType");
         writer_ << "MPI_Datatype " << sendType << ";\n"
-            << "MPI_Type_vector("
-            << sendType_count << ", "
-            << sendType_num<< ", "
-            << sendType_stride<< ", "
-            << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-            << "&"<<sendType<< ");\n"
-            <<"MPI_Type_commit(&"<< sendType << ");\n";
+                << "MPI_Type_vector(" << sendType_count << ", " << sendType_num
+                << ", " << sendType_stride << ", "
+                << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
+                << "&" << sendType << ");\n"
+                << "MPI_Type_commit(&" << sendType << ");\n";
 
-        size_t recvType_count = 1, recvType_num=1, recvType_stride = 1;
-        for(int i=0; i<ki; i++)
+        size_t recvType_count = 1, recvType_num = 1, recvType_stride = 1;
+        for (int i = 0; i < ki; i++)
             recvType_count *= odims[i];
-        for(int i=ki; i<n; i++)
-            recvType_stride*= odims[i];
+        for (int i = ki; i < n; i++)
+            recvType_stride *= odims[i];
         recvType_num = recvType_stride / p;
 
-        std::string recvType = UniqueName(tname+"_recvType"); 
-        writer_<< "MPI_Datatype " << recvType << ";\n"
-            << "MPI_Type_vector("
-            << recvType_count << ", "
-            << recvType_num<< ", "
-            << recvType_stride<< ", "
-            << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-            << "&"<< recvType << ");\n"
-            <<"MPI_Type_commit(&"<< recvType << ");\n";
+        std::string recvType = UniqueName(tname + "_recvType");
+        writer_ << "MPI_Datatype " << recvType << ";\n"
+                << "MPI_Type_vector(" << recvType_count << ", " << recvType_num
+                << ", " << recvType_stride << ", "
+                << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
+                << "&" << recvType << ");\n"
+                << "MPI_Type_commit(&" << recvType << ");\n";
 
-        std::string sendOffset = UniqueName(fname+"_sendOffset"); 
-        std::string recvOffset = UniqueName(tname+"_recvOffset"); 
-        std::string src = UniqueName("src"); 
-        std::string dest = UniqueName("dest"); 
+        std::string sendOffset = UniqueName(fname + "_sendOffset");
+        std::string recvOffset = UniqueName(tname + "_recvOffset");
+        std::string src = UniqueName("src");
+        std::string dest = UniqueName("dest");
         writer_ << "size_t " << sendOffset << " = 0;\n"
                 << "size_t " << recvOffset << " = 0;\n"
                 << "int " << src << ", " << dest << ";\n";
-                // << "int dest, src;\n";
+        // << "int dest, src;\n";
 
-        if(!config_.benchmark)
+        if (!config_.benchmark)
             writer_ << "for(int i=0; i<nprocs; i++) {\n";
         else {
             writer_ << "//disable self sendrecv so i count form 1\n";
@@ -772,8 +765,10 @@ void ParallelCodegen::transformOpDispatcher(OpNode *node) {
         }
         writer_.indentInc();
 
-        writer_ << src << " = " << "(rank + nprocs - i) % nprocs;\n"
-                << dest << " = " << "(rank + nprocs + i) % nprocs;\n"
+        writer_ << src << " = "
+                << "(rank + nprocs - i) % nprocs;\n"
+                << dest << " = "
+                << "(rank + nprocs + i) % nprocs;\n"
                 << "\n"
                 << sendOffset << " = " << sendType_num << " * " << dest << ";\n"
                 << recvOffset << " = " << recvType_num << " * " << src << ";\n";
@@ -790,36 +785,34 @@ void ParallelCodegen::transformOpDispatcher(OpNode *node) {
         writer_.indentDec();
         writer_ << "} // for\n";
 
-        if(config_.comm_op_annotation)
+        if (config_.comm_op_annotation)
             writer_ << "*/\n";
 
         return;
     }
-    if(ki==-2 && ko>=0) {
-        writer_ << "MPI_Reduce(" << fname << ", " << fname << ", "
-            << in_count << ", " << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-            << "MPI_SUM, " << 0 << ", MPI_COMM_WORLD);\n";
+    if (ki == -2 && ko >= 0) {
+        writer_ << "MPI_Reduce(" << fname << ", " << fname << ", " << in_count
+                << ", " << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
+                << "MPI_SUM, " << 0 << ", MPI_COMM_WORLD);\n";
 
-        size_t sendType_count = 1, sendType_num=1, sendType_stride = 1;
-        for(int i=0; i<ko; i++)
+        size_t sendType_count = 1, sendType_num = 1, sendType_stride = 1;
+        for (int i = 0; i < ko; i++)
             sendType_count *= idims[i];
-        for(int i=ko; i<n; i++)
-            sendType_stride*= idims[i];
+        for (int i = ko; i < n; i++)
+            sendType_stride *= idims[i];
         sendType_num = sendType_stride / p;
 
         heteroBegin();
 
-        std::string sendType = UniqueName(fname+"_sendType"); 
-        std::string sendOffset = UniqueName(fname+"_sendOffset"); 
+        std::string sendType = UniqueName(fname + "_sendType");
+        std::string sendOffset = UniqueName(fname + "_sendOffset");
 
         masterWriter_ << "MPI_Datatype " << sendType << ";\n"
-            << "MPI_Type_vector("
-            << sendType_count << ", "
-            << sendType_num<< ", "
-            << sendType_stride<< ", "
-            << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-            << "&" << sendType << ");\n"
-            << "MPI_Type_commit(&" << sendType << ";\n";
+                      << "MPI_Type_vector(" << sendType_count << ", "
+                      << sendType_num << ", " << sendType_stride << ", "
+                      << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
+                      << "&" << sendType << ");\n"
+                      << "MPI_Type_commit(&" << sendType << ";\n";
 
         masterWriter_ << "size_t " << sendOffset << " = 0;\n";
         masterWriter_ << "for(int r=1; r<" << p << "; r++) {\n";
@@ -829,39 +822,39 @@ void ParallelCodegen::transformOpDispatcher(OpNode *node) {
         int tag = getMPISendRecvTag(out_tensor);
 
         masterWriter_ << "MPI_Send(" << fname << "+" << sendOffset << ", "
-        << "1, " << sendType << ", "
-        << "r, " << tag << ",  MPI_COMM_WORLD);\n";
+                      << "1, " << sendType << ", "
+                      << "r, " << tag << ",  MPI_COMM_WORLD);\n";
         masterWriter_.indentDec();
         masterWriter_ << "} //for \n";
 
         masterWriter_ << "// rank 0 memcpy from " << fname << " to " << tname
-                << "\n";
-        if(!config_.benchmark) { 
-            if(ko == 0) {
+                      << "\n";
+        if (!config_.benchmark) {
+            if (ko == 0) {
                 masterWriter_ << tname << " = " << fname << ";\n";
             } else {
                 int tag_r0 = getMPISendRecvTag(in_tensor);
-                masterWriter_ << "MPI_Sendrecv(" << fname << ", "
-                    << "1, " << sendType << ", " << "0, " << tag_r0 << ", "
-                    << tname << ", " << out_count << ", "
-                    << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-                    << "0, " << tag_r0
-                    << ",  MPI_COMM_WORLD, &status);\n";
+                masterWriter_
+                    << "MPI_Sendrecv(" << fname << ", "
+                    << "1, " << sendType << ", "
+                    << "0, " << tag_r0 << ", " << tname << ", " << out_count
+                    << ", " << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
+                    << "0, " << tag_r0 << ",  MPI_COMM_WORLD, &status);\n";
             }
-        }else {
-                masterWriter_ << "// rank 0 memcpy or Self Sendrecv skipped in benchmark mode;\n";
+        } else {
+            masterWriter_ << "// rank 0 memcpy or Self Sendrecv skipped in "
+                             "benchmark mode;\n";
         }
 
         workerWriter_ << "MPI_Recv(" << tname << ", " << out_count << ", "
-                    << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-                    << "0, " << tag
-                    << ",  MPI_COMM_WORLD, &status);\n";
+                      << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
+                      << "0, " << tag << ",  MPI_COMM_WORLD, &status);\n";
         heteroEnd();
 
         return;
     }
 
-    if(ki==-1 && ko>=0) {
+    if (ki == -1 && ko >= 0) {
         writer_ << "// memcpy, no communication cost\n";
         return;
     }
@@ -871,7 +864,7 @@ void ParallelCodegen::transformOpDispatcher(OpNode *node) {
 }
 
 void ParallelCodegen::reduceOpDispatcher(OpNode *op) {
-    if(config_.comm_op_annotation)
+    if (config_.comm_op_annotation)
         writer_ << "/*\n";
 
     auto *from = ((TensorNode *)op->getParentNode(0));
@@ -887,11 +880,11 @@ void ParallelCodegen::reduceOpDispatcher(OpNode *op) {
     size_t count = from_tensor->size();
     std::string dtype = getTypeString(from_tensor);
 
-    writer_ << "MPI_Reduce(" << fname << ", " << tname << ", "
-        << count << ", " << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-        << "MPI_SUM, " << 0 << ", MPI_COMM_WORLD);\n";
+    writer_ << "MPI_Reduce(" << fname << ", " << tname << ", " << count << ", "
+            << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
+            << "MPI_SUM, " << 0 << ", MPI_COMM_WORLD);\n";
 
-    if(config_.comm_op_annotation)
+    if (config_.comm_op_annotation)
         writer_ << "*/\n";
 }
 
@@ -963,8 +956,9 @@ void ParallelCodegen::emitFuncCalls() {
 
     SWLOG_DEBUG(4) << ">>>> dispatching\n";
     for (auto *node : scheduled) {
-        if (dynamic_cast<ScatterOp *>(node->getOp()) || dynamic_cast<GatherOp *>(node->getOp())) {
-            if(!hetero_pending_) {
+        if (dynamic_cast<ScatterOp *>(node->getOp()) ||
+            dynamic_cast<GatherOp *>(node->getOp())) {
+            if (!hetero_pending_) {
                 heteroBegin();
             }
             dispatchOpNode(node, 0);
@@ -973,7 +967,7 @@ void ParallelCodegen::emitFuncCalls() {
             continue;
         }
 
-        if(hetero_pending_)
+        if (hetero_pending_)
             heteroEnd();
 
         /*
@@ -988,8 +982,7 @@ void ParallelCodegen::emitFuncCalls() {
         }
         if (isParallel(node)) {
             dispatchOpNode(node);
-        }
-        else {
+        } else {
             writer_ << "if(rank == 0) {\n";
             writer_.indentInc();
 
@@ -1015,23 +1008,21 @@ void ParallelCodegen::heteroBegin() {
 }
 void ParallelCodegen::heteroEnd() {
     masterWriter_.indentDec();
-    masterWriter_<< "} // if rank == 0\n";
+    masterWriter_ << "} // if rank == 0\n";
     workerWriter_.indentDec();
     workerWriter_ << "} // if rank != 0\n";
 
-    if(config_.comm_op_annotation)
+    if (config_.comm_op_annotation)
         writer_ << "/*\n";
 
-    writer_ << masterWriter_.get_code()
-            << workerWriter_.get_code();
+    writer_ << masterWriter_.get_code() << workerWriter_.get_code();
 
     masterWriter_.clear();
     workerWriter_.clear();
 
-    writer_ << masterWriter_.get_code()
-            << workerWriter_.get_code();
+    writer_ << masterWriter_.get_code() << workerWriter_.get_code();
 
-    if(config_.comm_op_annotation)
+    if (config_.comm_op_annotation)
         writer_ << "*/\n";
 
     hetero_pending_ = false;
@@ -1044,27 +1035,25 @@ void ParallelCodegen::dispatchOpNode(OpNode *op,
 
     SWLOG_DEBUG(4) << "dispatchOpNode " << op->name() << " for rank " << side
                    << "\n";
-    if(side == 0)
-        masterWriter_ << "// master " << op->name() << " : " << op->getOpName() << "\n";
-    else if(side == 1)
-        workerWriter_ << "// worker " << op->name() << " : " << op->getOpName() << "\n";
+    if (side == 0)
+        masterWriter_ << "// master " << op->name() << " : " << op->getOpName()
+                      << "\n";
+    else if (side == 1)
+        workerWriter_ << "// worker " << op->name() << " : " << op->getOpName()
+                      << "\n";
     else
         writer_ << "// " << op->name() << " : " << op->getOpName() << "\n";
-
 
     Label *label = op->getLabel();
     Device dev = label->getDeviceLabel();
     if (dynamic_cast<ScatterOp *>(op->getOp()) ||
         dynamic_cast<GatherOp *>(op->getOp())) {
         masterWorkerDispatcher(op, side);
-    }
-    else if (dynamic_cast<ReduceOp*>(op->getOp())) {
+    } else if (dynamic_cast<ReduceOp *>(op->getOp())) {
         reduceOpDispatcher(op);
-    }
-    else if (dynamic_cast<TransformOp *>(op->getOp())) {
+    } else if (dynamic_cast<TransformOp *>(op->getOp())) {
         transformOpDispatcher(op);
-    }
-    else {
+    } else {
         switch (dev.type) {
         case DeviceType::CPU:
             emitFuncCall(op);
@@ -1075,22 +1064,6 @@ void ParallelCodegen::dispatchOpNode(OpNode *op,
         default:
             SWLOG_ERROR << "unknown device type in dispatchOpNode\n";
         }
-    }
-}
-
-void ParallelCodegen::emitMemFree(std::string name, Device dev) {
-    switch (dev.type) {
-    case DeviceType::CPU:
-        writer_ << "free(" << name << ");\n";
-        break;
-    case DeviceType::GPU:
-        writer_ << "\n";
-        writer_ << "cudaSetDevice(" << dev.id << ");\n";
-        writer_ << "cudaFree(" << name << ");\n";
-        break;
-    default:
-        SWLOG_ERROR << "Unknown DeviceType\n";
-        break;
     }
 }
 
@@ -1106,7 +1079,7 @@ void ParallelCodegen::emitMemFree() {
         uint64_t size = allocator->getMemAllocated();
         if (dev.rank != 0 || size == 0)
             continue;
-        emitMemFree(base, dev);
+        Codegen::emitMemFree(base, dev);
     }
 
     writer_.indentDec();
@@ -1123,7 +1096,7 @@ void ParallelCodegen::emitMemFree() {
         std::string base = p_mem_alllocator_->getBasePtrName();
         // uint64_t size = p_mem_alllocator_->getMemAllocated();
 
-        emitMemFree(base, dev);
+        Codegen::emitMemFree(base, dev);
     }
     // for (auto m : mem_allocators_) {
     //     MemoryAllocator *allocator = m.get();

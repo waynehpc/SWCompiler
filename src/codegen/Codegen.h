@@ -11,9 +11,9 @@
 #include "MakefileBuilder.h"
 #include "MemoryAllocator.h"
 #include "common.h"
+#include <map>
 #include <set>
 #include <sstream>
-#include <map>
 
 namespace swc {
 class IRGraph;
@@ -54,7 +54,7 @@ class Codegen {
     void codeGenInit();
 
     /// emit CUDA related code. e.g. cuBlas handle, cudaStream creating
-    void emitCUDAInit();
+    virtual void emitCUDAInit();
 
     // emit mkldnn related code e.g. engine
     void emitMKLDNNInit();
@@ -62,7 +62,7 @@ class Codegen {
     /// Dataloader for train batch executions
     virtual void emitDataLoaderInit();
     // Dataloader for infer batch executions
-    // TODO: modify config and merge this with emitDataLoaderInit() 
+    // TODO: modify config and merge this with emitDataLoaderInit()
     virtual void emitInferDataLoaderInit();
 
     /// create allocators for devices according to config
@@ -72,7 +72,7 @@ class Codegen {
 
     /// generate code for IRGraph
     virtual void emitHeader();
-    std::string generate();
+    std::string generate(std::string outfile = "Graph.cpp");
 
     //----------------------------------------------------------
     /** \brief generate malloc for tensor data
@@ -85,6 +85,7 @@ class Codegen {
 
     /// emit free memory codes
     virtual void emitMemFree();
+    void emitMemFree(std::string name, Device dev);
 
     /// build Tensor* -> <base, offset> map for L1 Graph
     virtual void allocateMemAddr();
@@ -95,7 +96,7 @@ class Codegen {
     virtual void emitVarDeclarations();
     /// allocate statement of cpu/gpu mem
     virtual void emitMemAllocations();
-    void emitMemAllocation(std::string buffer, size_t bytes, Device& dev);
+    void emitMemAllocation(std::string buffer, size_t bytes, Device &dev);
 
     /// initialize tensors for L1 IRGraph
     virtual void emitTensorAddresses();
@@ -129,7 +130,7 @@ class Codegen {
     /// generate function call for opNode
     void emitFuncCall(OpNode *op);
     /// generate CUDA kernel function call for opNode
-    void emitFuncCallCUDA(OpNode *op);
+    virtual void emitFuncCallCUDA(OpNode *op);
 
     /// context swith to device e.g. cudaSetDevice()
     void switchTo(IRGraph *subGraph);
@@ -137,7 +138,7 @@ class Codegen {
     void switchFrom(IRGraph *subGraph);
 
     /// dispatch OpNode for memcpy or kernel func call
-    void dispatchOpNode(OpNode *op);
+    virtual void dispatchOpNode(OpNode *op);
     void emitMemcpyFromTo(Tensor *from, Device from_dev, size_t from_offset,
                           size_t size, Tensor *to, Device to_dev,
                           size_t to_offset);
@@ -150,7 +151,6 @@ class Codegen {
     virtual void emitEnvInit();
     virtual void emitEnvFinalize();
 
-
     // int getMPISendRecvTag(Tensor *);
     // bool delMPISendRecvTag(Tensor *);
     //----------------------------------------------------------
@@ -158,18 +158,23 @@ class Codegen {
     // we know layout by tensor->getMemLayoutTag()
     // but we may initialize desc to be format_tag::any
     // or we can use pre-defined memory
-    void emit_mkldnn_memory_desc(std::string &name, std::string dims, Tensor *tensor, std::string layout_tag = std::string());
-    void emit_mkldnn_memory(std::string &name, Tensor *t, std::string dims, 
-        std::string engine, std::string handle, std::string layout_tag=std::string()); 
-    
+    void emit_mkldnn_memory_desc(std::string &name, std::string dims,
+                                 Tensor *tensor,
+                                 std::string layout_tag = std::string());
+    void emit_mkldnn_memory(std::string &name, Tensor *t, std::string dims,
+                            std::string engine, std::string handle,
+                            std::string layout_tag = std::string());
+
     //----------------------------------------------------------
 
-protected:
+  protected:
     void destroy();
+
+    std::vector<OpNode *> getScheduledOpNodes();
 
     std::string getTypeString(Tensor *);
     std::string getBytesProtoString(BytesProto proto);
-    std::string getInitialLizerString(const std::vector<size_t> &dims);
+    // std::string getInitializerString(const std::vector<size_t> &dims);
 
     CodeWriter headerWriter_;
     CodeWriter writer_;
@@ -183,29 +188,33 @@ protected:
     std::unordered_map<std::string, int> names_map_;
 
     std::vector<std::shared_ptr<MemoryAllocator>> mem_allocators_;
-    /// For parallel
+
+    /// For parallel processes
     std::shared_ptr<MemoryAllocator> p_mem_alllocator_;
 
+    /// For parallel multi gpus
+    std::shared_ptr<MemoryAllocator> p_gpumem_allocator_;
+
     std::map<Tensor *, std::string> tensors_name_map_;
-    std::map<Tensor *, std::pair<std::string, uint64_t>>
-        tensors_offset_map_;
+    std::map<Tensor *, std::pair<std::string, uint64_t>> tensors_offset_map_;
 
     /// for mkldnn memory
-    std::map<std::pair<Tensor *, std::string>, std::string> tensors_mkldnn_mem_map_;
-    // in mpi environment, run to specify handle just according to tensor* and name
-    // rank 0 and rank1 may share
-    // std::map<std::pair<Tensor *, std::string>, std::string> master_tensors_mkldnn_mem_map_;
-    // std::map<std::pair<Tensor *, std::string>, std::string> para_tensors_mkldnn_mem_map_;
+    std::map<std::pair<Tensor *, std::string>, std::string>
+        tensors_mkldnn_mem_map_;
+    // in mpi environment, run to specify handle just according to tensor* and
+    // name rank 0 and rank1 may share std::map<std::pair<Tensor *,
+    // std::string>, std::string> master_tensors_mkldnn_mem_map_;
+    // std::map<std::pair<Tensor *, std::string>, std::string>
+    // para_tensors_mkldnn_mem_map_;
 
     /// to use Device as key, we implement std::hash() of Device in common.h
     /// if implemented with std::map, we must define comparison of Device
     std::unordered_map<Device, MemoryAllocator *> dev_allocator_map_;
 };
 
-
 class ParallelCodegen : public Codegen {
-public:
-    ParallelCodegen(IRGraph *graph, Config &config) : Codegen(graph, config) { }
+  public:
+    ParallelCodegen(IRGraph *graph, Config &config) : Codegen(graph, config) {}
 
     /// add mpi header
     void emitHeader() override;
@@ -214,16 +223,15 @@ public:
     void emitVarDeclarations() override;
     void emitMemAllocations() override;
     void emitMemFree() override;
-    void emitMemFree(std::string name, Device dev);
     void emitTensorAddresses() override;
     void emitTensorInitializations() override;
-    void emitTensorInitialization(TensorNode* tnode);
+    void emitTensorInitialization(TensorNode *tnode);
     void emitExecute() override;
     void emitFuncCalls() override;
     // void emitFuncCall(OpNode *op, CodeWriter& writer);
     void heteroBegin();
     void heteroEnd();
-    void dispatchOpNode(OpNode *op, int side=-1/*0:master, ~0: worker*/);
+    void dispatchOpNode(OpNode *op, int side = -1 /*0:master, ~0: worker*/);
 
     void emitEnvInit() override;
     void emitEnvFinalize() override;
@@ -235,7 +243,7 @@ public:
     void emitMPIInit();
     void emitMPIFinalize();
 
-private:
+  private:
     CodeWriter masterWriter_; // rank == 0
     CodeWriter workerWriter_; // rank!=0
     bool hetero_pending_{false};
@@ -245,15 +253,20 @@ private:
 
     // std::unordered_map<Tensor*, std::string> tensors_base_map_;
     std::vector<Tensor *> mpi_sendRecv_tags_;
-    
+
     // std::vector<OpNode*> _scheduled_opnodes;
-    void masterWorkerDispatcher(OpNode *node, int side/*master:0, worker:1*/);
+    void masterWorkerDispatcher(OpNode *node, int side /*master:0, worker:1*/);
     void transformOpDispatcher(OpNode *node);
     void reduceOpDispatcher(OpNode *node);
     int getMPISendRecvTag(Tensor *);
     bool delMPISendRecvTag(Tensor *);
-    std::vector<OpNode*> schedule();
+    std::vector<OpNode *> schedule();
 };
+
+std::pair<size_t, size_t> convertToDim2(const std::vector<size_t> &dims);
+std::string getInitializerString(const std::vector<size_t> &dims);
+std::string emitArrayDefAndInit(std::string name,
+                                const std::vector<size_t> &dims);
 
 } // namespace codegen
 } // namespace swc
