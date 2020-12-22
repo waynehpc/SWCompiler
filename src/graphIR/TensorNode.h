@@ -18,14 +18,14 @@
 
 namespace swc {
 
-//Forward declaration
+// Forward declaration
 class TilingLabel;
 
 class TensorNode : public IRNode {
   public:
     TensorNode() : tensor_(NULL){};
     explicit TensorNode(std::string name, IRNode *parent = nullptr)
-        : IRNode(TENSOR_NODE, name, parent){}
+        : IRNode(TENSOR_NODE, name, parent) {}
     explicit TensorNode(std::string name, Tensor *tensor,
                         IRNode *parent = nullptr)
         : IRNode(TENSOR_NODE, name, parent), tensor_(tensor){};
@@ -38,7 +38,7 @@ class TensorNode : public IRNode {
         tensor_ = new Tensor(shape, dtype, layout);
     }
 
-    ~TensorNode(){ destroy(); }
+    ~TensorNode() { destroy(); }
 
     void destroy();
 
@@ -48,7 +48,6 @@ class TensorNode : public IRNode {
     void setTraining(int train) { tensor_->setTraining(train); }
     int getTraining() const { return tensor_->getTraining(); }
 
-
     DataType getDataType() { return tensor_->getDataType(); }
     std::vector<unsigned long> getDims() { return tensor_->getDims(); }
     size_t getNDim() { return tensor_->getNDim(); }
@@ -56,26 +55,25 @@ class TensorNode : public IRNode {
     TensorNode *deepClone() const;
     std::string toString() const;
 
-    //AutoDiff implementation in tensorNodes
-    void autoDiff(IRGraph* graph,
-            std::unordered_map<IRNode*, IRNode*> &gradNodeMap,
-            void* methodParams,
-            pass::METHOD_TYPE methodType);
+    // AutoDiff implementation in tensorNodes
+    void autoDiff(IRGraph *graph,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap,
+                  void *methodParams, pass::METHOD_TYPE methodType);
 
     void checkValid();
 
-    void setTilingLabel(TilingLabel* tilinglabel){
+    void setTilingLabel(TilingLabel *tilinglabel) {
         _tilingLabel = tilinglabel;
     }
-    TilingLabel* getTilingLabel() { return _tilingLabel; }
+    TilingLabel *getTilingLabel() { return _tilingLabel; }
 
     void setMemLayout(mem_layout_t layout) { tensor_->setMemLayout(layout); }
     mem_layout_t getMemLayout() const { return tensor_->getMemLayout(); }
-    
+
   private:
     Tensor *tensor_{nullptr};
 
-    TilingLabel* _tilingLabel{nullptr};
+    TilingLabel *_tilingLabel{nullptr};
 };
 
 } // namespace swc

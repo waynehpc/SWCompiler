@@ -17,7 +17,7 @@ using namespace swc::op;
 
 namespace swc {
 
-//Forward declaration
+// Forward declaration
 class StrategyLabel;
 
 class OpNode : public IRNode {
@@ -47,9 +47,10 @@ class OpNode : public IRNode {
         return run;
     }
 
-    void autoDiff(IRGraph* graph,
-            std::unordered_map<IRNode*, IRNode*> &gradNodeMap){
-        SWLOG_DEBUG(4) << "OpNode " << name() << " begin to autodiff" << std::endl;
+    void autoDiff(IRGraph *graph,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap) {
+        SWLOG_DEBUG(4) << "OpNode " << name() << " begin to autodiff"
+                       << std::endl;
         Op *_op = op_;
         _op->autoDiff(graph, this, gradNodeMap);
     };
@@ -60,29 +61,29 @@ class OpNode : public IRNode {
         return;
     };
 
-    void outTensorShapeGen(size_t index, TensorShape* tShape) {
+    void outTensorShapeGen(size_t index, TensorShape *tShape) {
         Op *_op = op_;
         _op->outTensorShapeGen(this, index, tShape);
     };
 
     void genOutTensor() const;
 
-    void setStrategyLabel(StrategyLabel* strategyLabel){
+    void setStrategyLabel(StrategyLabel *strategyLabel) {
         _strategyLabel = strategyLabel;
     }
-    StrategyLabel* getStrategyLabel() { return _strategyLabel; }
+    StrategyLabel *getStrategyLabel() { return _strategyLabel; }
 
-    size_t getCost(Config& config) {
-        return op_->getCost(this, config);
-    } 
-    std::string getCostTrace(Config &config) { return op_->getCostTrace(this, config); }
+    size_t getCost(Config &config) { return op_->getCost(this, config); }
+    std::string getCostTrace(Config &config) {
+        return op_->getCostTrace(this, config);
+    }
 
   private:
     Op *op_;
     bool run_{true};
     bool run_once_{false};
 
-    StrategyLabel* _strategyLabel{NULL};
+    StrategyLabel *_strategyLabel{NULL};
 };
 
 } // namespace swc

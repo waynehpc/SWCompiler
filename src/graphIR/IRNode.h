@@ -10,19 +10,18 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <unordered_map>
-#include <algorithm>
 
-#include "pass/Label.h"
 #include "pass/AutodiffPass.h"
+#include "pass/Label.h"
 
 namespace swc {
 
-//forward declaration
+// forward declaration
 class IRGraph;
-
 
 class IRNode {
   public:
@@ -129,13 +128,16 @@ class IRNode {
     }
     // called by tensornode, node order in [spec_child's parents] matters
     void replaceUseKeepOrder(IRNode *spec_child, IRNode *node) {
-        SWLOG_DEBUG(4) << "replaceUseKeepOrder: " << spec_child->name() << " parent " 
-            << this->name() << "->" << node->name() <<"\n" ;
-        if(std::find(_childNodes.begin(), _childNodes.end(), spec_child) == _childNodes.end())
+        SWLOG_DEBUG(4) << "replaceUseKeepOrder: " << spec_child->name()
+                       << " parent " << this->name() << "->" << node->name()
+                       << "\n";
+        if (std::find(_childNodes.begin(), _childNodes.end(), spec_child) ==
+            _childNodes.end())
             return;
         // for(auto n : spec_child->getParentNodes())
         //     std::cout<< n->name() << "\n";
-        // std::cout << "replaceUseKeepOrder for " << this->name() <<  " begin\n";
+        // std::cout << "replaceUseKeepOrder for " << this->name() <<  "
+        // begin\n";
         for (auto &cp : spec_child->getParentNodes()) {
             if (cp == this) {
                 // order of parent matter
@@ -152,8 +154,9 @@ class IRNode {
 
     // called by opnode, node order in this->children matters
     void replaceOutKeepOrder(IRNode *node, int n) {
-        SWLOG_DEBUG(4) << "replaceOutKeepOrder: " << this->name() << " 's out " << n <<"\n" ;
-        
+        SWLOG_DEBUG(4) << "replaceOutKeepOrder: " << this->name() << " 's out "
+                       << n << "\n";
+
         auto *orig_child = _childNodes.at(n);
         _childNodes[n] = node;
         node->pushParentNode(this);
@@ -166,22 +169,20 @@ class IRNode {
     void setExternal(bool flag) { _isExternal = flag; }
     bool isExternal() const { return _isExternal; }
 
-    //Virtual function entry
+    // Virtual function entry
     virtual IRNode *clone() const = 0;
     virtual IRNode *deepClone() const = 0;
 
     virtual void destroy(){};
-    virtual void autoDiff(IRGraph* graph,
-                        std::unordered_map<IRNode*, IRNode*> &gradNodeMap){}
+    virtual void autoDiff(IRGraph *graph,
+                          std::unordered_map<IRNode *, IRNode *> &gradNodeMap) {
+    }
 
-    virtual void autoDiff(IRGraph* graph,
-                        std::unordered_map<IRNode*, IRNode*> &gradNodeMap,
-                        void* methodParams,
-                        pass::METHOD_TYPE methodType){}
+    virtual void autoDiff(IRGraph *graph,
+                          std::unordered_map<IRNode *, IRNode *> &gradNodeMap,
+                          void *methodParams, pass::METHOD_TYPE methodType) {}
 
     virtual void checkValid(){};
-
-
 
   private:
     std::vector<IRNode *> _parentNodes;

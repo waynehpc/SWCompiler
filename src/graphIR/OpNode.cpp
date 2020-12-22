@@ -15,7 +15,7 @@
 
 namespace swc {
 void OpNode::destroy() {
-    SWLOG_DEBUG(4) << "Destroy OpNode: " << name() << "\n"; 
+    SWLOG_DEBUG(4) << "Destroy OpNode: " << name() << "\n";
     getOp()->destroy();
     getLabel()->destroy();
     delete _strategyLabel;
@@ -48,6 +48,5 @@ std::string OpNode::toString() const {
        << "    nOutput: " << op_->getnOutput();
     return os.str();
 }
-
 
 } // namespace swc
