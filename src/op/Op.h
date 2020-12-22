@@ -26,7 +26,7 @@ class ParallelGen;
 
 namespace op {
 
-enum activation_type{
+enum activation_type {
     SWC_ACTIVATION_RELU,
     SWC_ACTIVATION_TANH,
     SWC_ACTIVATION_SIGMOID
@@ -46,7 +46,7 @@ class Op {
     ~Op(){};
 
     virtual void destroy(){};
-    
+
     void addInputTensor(Tensor *inputTensor) {
         _inputTensors.push_back(inputTensor);
         _nInputTensor++;
@@ -61,17 +61,16 @@ class Op {
     OpType getOpType() { return _opType; }
 
     // aggregate information for dotGen or Debug
-    // calls getOpName, getnInput/Output etc. 
+    // calls getOpName, getnInput/Output etc.
     // some derived classes may override this
-    virtual std::string getOpInfo(); 
+    virtual std::string getOpInfo();
 
     // Logically these function is better in OpNode, but need many if else
     // because different operators do not derive from OpNode, but are different
     // in Op member
     // if use virtual foo() = 0; then all Op must derive this
-    virtual size_t getCost(OpNode *, Config& config) { return 0; }
-    virtual std::string getCostTrace(OpNode*, Config& config) { return "";}
-
+    virtual size_t getCost(OpNode *, Config &config) { return 0; }
+    virtual std::string getCostTrace(OpNode *, Config &config) { return ""; }
 
     inline const std::string getOpName() { return _opClassName; }
     inline int getnInput() { return _nInput; }
@@ -80,25 +79,24 @@ class Op {
     // for lowering
     virtual void lowering(IRGraph *graph, IRNode *node) {
         SWLOG_DEBUG(100) << "Lowering unimplemented in base Op class"
-                        << std::endl;
+                         << std::endl;
     }
 
-    virtual void checkValid(OpNode* node);
+    virtual void checkValid(OpNode *node);
 
-    virtual void autoDiff(IRGraph* graph,
-            IRNode* opNode,
-            std::unordered_map<IRNode*, IRNode*> &gradNodeMap) { 
-              SWLOG_DEBUG(100) << "OpType [" 
-                  << this->getOpName() << "] autoDiff() unimplemented, pass" << std::endl; 
+    virtual void autoDiff(IRGraph *graph, IRNode *opNode,
+                          std::unordered_map<IRNode *, IRNode *> &gradNodeMap) {
+        SWLOG_DEBUG(100) << "OpType [" << this->getOpName()
+                         << "] autoDiff() unimplemented, pass" << std::endl;
     }
-    
+
     virtual void einsumLowering(IRGraph *graph, IRNode *node) {
-        SWLOG_DEBUG(100) << "EinsumLowering unimplemented in base Op class" << std::endl;
+        SWLOG_DEBUG(100) << "EinsumLowering unimplemented in base Op class"
+                         << std::endl;
     }
 
-    virtual void outTensorShapeGen(OpNode* node, 
-                                    size_t index, 
-                                    TensorShape* tShape);
+    virtual void outTensorShapeGen(OpNode *node, size_t index,
+                                   TensorShape *tShape);
     /*
     Op *clone() const {
         return new Op(_opType, _nInput, _nOutput, _opClassName);
@@ -132,22 +130,24 @@ class Op {
     std::vector<Tensor *> _outputTensors;
 
     /* Edit by zwl @ 20190705
-     * The following variables indicate the dimension-level relation shape of input/output tensors,
-     * which is designed as a generalized abstraction for tensors (similar to a Einsum expression),
-     * and is used for analyzing and generating parallel strategies for a tensor graph.
-     * 
-     * _einOp is a label variable indicats whether the Op can be discribed using Einsum expression.
-     * _einRep is the vecter stores the Einsum expression for input and output tensors seperately,
-     * _parallelDim is a vector of unsigned integers which store the parallelizable label of all input tensors, used for generate parallelization strategy, 
-     * e.g. input tensor is expressed as "ijk" and has a parallel label x, 
-     *      then dimension i is parallelizable <==> ((x>>2) & 1 == 1)
-     *      dimension j is parallelizable <==> ((x>>1) & 1 == 1)
+     * The following variables indicate the dimension-level relation shape of
+     * input/output tensors, which is designed as a generalized abstraction for
+     * tensors (similar to a Einsum expression), and is used for analyzing and
+     * generating parallel strategies for a tensor graph.
+     *
+     * _einOp is a label variable indicats whether the Op can be discribed using
+     * Einsum expression. _einRep is the vecter stores the Einsum expression for
+     * input and output tensors seperately, _parallelDim is a vector of unsigned
+     * integers which store the parallelizable label of all input tensors, used
+     * for generate parallelization strategy, e.g. input tensor is expressed as
+     * "ijk" and has a parallel label x, then dimension i is parallelizable <==>
+     * ((x>>2) & 1 == 1) dimension j is parallelizable <==> ((x>>1) & 1 == 1)
      *      dimension k is parallelizable <==> ((x>>0) & 1 == 1)
      *
      */
     int _einOp{0};
-    std::vector<std::string> _einRep; 
-    std::vector<int> _parallelDim; 
+    std::vector<std::string> _einRep;
+    std::vector<int> _parallelDim;
 
     friend class swc::ParallelGen;
 };

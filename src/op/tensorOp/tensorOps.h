@@ -17,22 +17,20 @@ namespace op {
 
 class TensorDescendOp : public Op {
   public:
-    TensorDescendOp(int nDim, int start, int end) : 
-        Op(TENSOR_OP, 1, 1, std::string("TensorDescend")) {
+    TensorDescendOp(int nDim, int start, int end)
+        : Op(TENSOR_OP, 1, 1, std::string("TensorDescend")) {
         assert((start <= end) && "start can not be larger than end");
         _start = start;
         _end = end;
         _nDim = nDim;
         this->_inputNDims.push_back(nDim);
-        this->_outputNDims.push_back(nDim-(end-start));
+        this->_outputNDims.push_back(nDim - (end - start));
         this->_einOp = 1;
     }
     ~TensorDescendOp() {}
 
-    void autoDiff(IRGraph* graph, 
-        IRNode* opNode,
-        std::unordered_map<IRNode*, IRNode*>&gradNodeMap);
-
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
 
     void destroy(){};
 
@@ -44,24 +42,23 @@ class TensorDescendOp : public Op {
 
 class TensorAscendOp : public Op {
   public:
-    TensorAscendOp(int nDim, int start, int end) : 
-        Op(TENSOR_OP, 1, 1, std::string("TensorAscend")) {
+    TensorAscendOp(int nDim, int start, int end)
+        : Op(TENSOR_OP, 1, 1, std::string("TensorAscend")) {
         assert((start <= end) && "start can not be larger than end");
         _start = start;
         _end = end;
         _nDim = nDim;
-        this->_inputNDims.push_back(nDim-(end-start));
+        this->_inputNDims.push_back(nDim - (end - start));
         this->_outputNDims.push_back(nDim);
         this->_einOp = 1;
     }
     ~TensorAscendOp() {}
 
-    void autoDiff(IRGraph* graph, 
-        IRNode* opNode,
-        std::unordered_map<IRNode*, IRNode*>&gradNodeMap);
-    
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
+
     void destroy(){};
-  
+
   private:
     int _nDim;
     int _start;
@@ -133,7 +130,6 @@ class MatrixTransposeOp : public Op {
     ~MatrixTransposeOp() {}
     void destroy(){};
 };
-
 
 class MatrixDescendOp : public Op {
   public:

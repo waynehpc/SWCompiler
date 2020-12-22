@@ -39,20 +39,19 @@ class MatrixMatrixFCOp : public Op {
         this->_einRep.push_back("ij");
     }
     ~MatrixMatrixFCOp() {}
-    void destroy() {};
+    void destroy(){};
 
     void checkValid(OpNode *node);
-    void outTensorShapeGen(OpNode* node, size_t index, TensorShape* tShape);
+    void outTensorShapeGen(OpNode *node, size_t index, TensorShape *tShape);
     // for lowering
-    void autoDiff(IRGraph* graph,
-        IRNode* opNode,
-        std::unordered_map<IRNode*, IRNode*>&gradNodeMap);
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
 
     void einsumLowering(IRGraph *graph, IRNode *node);
 
     // for common lowering
     void lowering(IRGraph *graph, IRNode *node);
-    void paralleling(IRGraph *graph, IRNode * node);
+    void paralleling(IRGraph *graph, IRNode *node);
 };
 
 // update FCGrad do not need output
@@ -67,11 +66,11 @@ class MatrixMatrixFCGradOp : public Op {
 
         this->_einOp = 1;
         this->_einRep.push_back("ik"); // input
-        this->_einRep.push_back("kj"); // weight 
+        this->_einRep.push_back("kj"); // weight
         // this->_einRep.push_back("ij"); // orig_output
-        this->_einRep.push_back("ij"); // outputGrad 
+        this->_einRep.push_back("ij"); // outputGrad
         this->_einRep.push_back("ik"); // inputGrad
-        this->_einRep.push_back("kj"); // weightGrad 
+        this->_einRep.push_back("kj"); // weightGrad
     }
     ~MatrixMatrixFCGradOp() {}
     void destroy() {}
@@ -80,14 +79,14 @@ class MatrixMatrixFCGradOp : public Op {
     void einsumLowering(IRGraph *graph, IRNode *node);
     // for common lowering
     void lowering(IRGraph *graph, IRNode *node);
-
 };
 
 class MatrixMatrixFCBiasOp : public Op {
     // input, weight, bias
     // output
   public:
-    MatrixMatrixFCBiasOp() : Op(DL_OP, 3, 1, std::string("MatrixMatrixFCBias")) {
+    MatrixMatrixFCBiasOp()
+        : Op(DL_OP, 3, 1, std::string("MatrixMatrixFCBias")) {
         this->_inputNDims.push_back(2);
         this->_inputNDims.push_back(2);
         this->_inputNDims.push_back(1);
@@ -96,23 +95,21 @@ class MatrixMatrixFCBiasOp : public Op {
         this->_einOp = 1;
         this->_einRep.push_back("ik"); // input
         this->_einRep.push_back("kj"); // weight
-        this->_einRep.push_back("j"); // bias
-        this->_einRep.push_back("ij"); // out 
+        this->_einRep.push_back("j");  // bias
+        this->_einRep.push_back("ij"); // out
     }
     ~MatrixMatrixFCBiasOp() {}
     void destroy(){};
 
     void checkValid(OpNode *node);
-    void outTensorShapeGen(OpNode* node, size_t index, TensorShape* tShape);
+    void outTensorShapeGen(OpNode *node, size_t index, TensorShape *tShape);
     // for lowering
-    void autoDiff(IRGraph* graph,
-        IRNode* opNode,
-        std::unordered_map<IRNode*, IRNode*>&gradNodeMap);
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
     void einsumLowering(IRGraph *graph, IRNode *node);
     // for common lowering
     void lowering(IRGraph *graph, IRNode *node);
 };
-
 
 class MatrixMatrixFCBiasGradOp : public Op {
     // input, wieght, bias, orig_output, orig_output_grad
@@ -123,14 +120,14 @@ class MatrixMatrixFCBiasGradOp : public Op {
 
         this->_einOp = 1;
         this->_einRep.push_back("ik"); // input
-        this->_einRep.push_back("kj"); // weight 
-        this->_einRep.push_back("j"); // bias 
+        this->_einRep.push_back("kj"); // weight
+        this->_einRep.push_back("j");  // bias
         // this->_einRep.push_back("ij"); // orig_output
-        this->_einRep.push_back("ij"); // outputGrad 
+        this->_einRep.push_back("ij"); // outputGrad
 
         this->_einRep.push_back("ik"); // inputGrad
-        this->_einRep.push_back("kj"); // weightGrad 
-        this->_einRep.push_back("j"); // biasGrad 
+        this->_einRep.push_back("kj"); // weightGrad
+        this->_einRep.push_back("j");  // biasGrad
     }
     ~MatrixMatrixFCBiasGradOp() {}
     void destroy() {}
@@ -142,16 +139,17 @@ class MatrixMatrixFCBiasGradOp : public Op {
     void paralleling();
 };
 
-class ReshapeOp: public Op {
+class ReshapeOp : public Op {
     std::vector<size_t> oshape_;
 
   public:
-    ReshapeOp() : Op(DL_OP, 1, 1, std::string("Reshape")) {
-        /* unknown
-        this->_inputNDims.push_back(4);
-        this->_outputNDims.push_back(4);
-        */
-    };
+    ReshapeOp()
+        : Op(DL_OP, 1, 1, std::string("Reshape")){
+              /* unknown
+              this->_inputNDims.push_back(4);
+              this->_outputNDims.push_back(4);
+              */
+          };
     ReshapeOp(std::vector<size_t> &shape)
         : Op(DL_OP, 1, 1, std::string("Reshape")) {
         oshape_.assign(shape.begin(), shape.end());
@@ -172,9 +170,8 @@ class MatrixTanhOp : public Op {
     };
     ~MatrixTanhOp();
     void destroy(){};
-    void autoDiff(IRGraph* graph,
-        IRNode* opNode,
-        std::unordered_map<IRNode*, IRNode*>&gradNodeMap);
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
 };
 
 class MatrixTanhGradOp : public Op {
@@ -195,7 +192,7 @@ class MatrixSoftmaxOp : public Op {
     MatrixSoftmaxOp() : Op(DL_OP, 1, 1, std::string("MatrixSoftmax")) {
         this->_inputNDims.push_back(2);
         this->_outputNDims.push_back(2);
-        
+
         this->_einOp = 1;
         this->_einRep.push_back("i_");
         this->_einRep.push_back("i_");
@@ -203,22 +200,21 @@ class MatrixSoftmaxOp : public Op {
     ~MatrixSoftmaxOp();
     void checkValid(OpNode *node);
     void destroy(){};
-    void autoDiff(IRGraph* graph,
-        IRNode* opNode,
-        std::unordered_map<IRNode*, IRNode*>&gradNodeMap);
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
 };
 
-
 class MatrixSoftmaxGradOp : public Op {
-public:
-    MatrixSoftmaxGradOp() : Op(DL_OP, 3, 1, std::string("MatrixSoftmaxGrad")) {};
+  public:
+    MatrixSoftmaxGradOp() : Op(DL_OP, 3, 1, std::string("MatrixSoftmaxGrad")){};
     ~MatrixSoftmaxGradOp();
     void destroy() {}
 };
 
 class MatrixSoftmaxWithLossOp : public Op {
   public:
-    MatrixSoftmaxWithLossOp() : Op(DL_OP, 2, 2, std::string("MatrixSoftmaxWithLoss")) {
+    MatrixSoftmaxWithLossOp()
+        : Op(DL_OP, 2, 2, std::string("MatrixSoftmaxWithLoss")) {
         this->_inputNDims.push_back(2);
         this->_inputNDims.push_back(2);
         this->_outputNDims.push_back(2);
@@ -226,23 +222,24 @@ class MatrixSoftmaxWithLossOp : public Op {
 
         this->_einOp = 1;
         this->_einRep.push_back("i_"); // input
-        this->_einRep.push_back("i"); // label
+        this->_einRep.push_back("i");  // label
         this->_einRep.push_back("i_"); // output
-        this->_einRep.push_back("_"); // loss scalar // error, shoudl not reduce, but mean... 
+        this->_einRep.push_back(
+            "_"); // loss scalar // error, shoudl not reduce, but mean...
     };
     ~MatrixSoftmaxWithLossOp();
     void checkValid(OpNode *node);
     void destroy(){};
-    void autoDiff(IRGraph* graph,
-        IRNode* opNode,
-        std::unordered_map<IRNode*, IRNode*>&gradNodeMap);
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
 };
 
 class MatrixSoftmaxWithLossGradOp : public Op {
   public:
-    MatrixSoftmaxWithLossGradOp() : Op(DL_OP, 2, 1, std::string("MatrixSoftmaxWithLossGrad")){
+    MatrixSoftmaxWithLossGradOp()
+        : Op(DL_OP, 2, 1, std::string("MatrixSoftmaxWithLossGrad")) {
         this->_einOp = 1;
-        this->_einRep.push_back("n"); // label  
+        this->_einRep.push_back("n");  // label
         this->_einRep.push_back("n_"); // origin out
         this->_einRep.push_back("n_"); // grad of input
     };
@@ -250,8 +247,9 @@ class MatrixSoftmaxWithLossGradOp : public Op {
     void destroy() {}
 };
 
-class DropoutOp: public Op {
-  float ratio_;
+class DropoutOp : public Op {
+    float ratio_;
+
   public:
     DropoutOp(float ratio) : Op(DL_OP, 2, 1, std::string("Dropout")) {
         ratio_ = ratio;
@@ -260,19 +258,16 @@ class DropoutOp: public Op {
         this->_outputNDims.push_back(2);
 
         this->_einOp = 1;
-        this->_einRep.push_back("jk"); // label  
+        this->_einRep.push_back("jk"); // label
         this->_einRep.push_back("jk"); // origin out
         this->_einRep.push_back("jk"); // grad of input
-        
     };
     ~DropoutOp();
     float getRatio() { return ratio_; }
-    void destroy(){}
-    void autoDiff(IRGraph* graph,
-        IRNode* opNode,
-        std::unordered_map<IRNode*, IRNode*>&gradNodeMap);
+    void destroy() {}
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
 };
-
 
 class SGDOp : public Op {
     // weight weight_grad momentum
@@ -282,133 +277,119 @@ class SGDOp : public Op {
     float momentum_{0.9};
     size_t batch_{1};
 
-public:
-    SGDOp() : Op(DL_OP, 3, 1, std::string("SGD")) {
-
-    }
+  public:
+    SGDOp() : Op(DL_OP, 3, 1, std::string("SGD")) {}
     SGDOp(float lr, float decay, float momentum, size_t batch)
         : Op(DL_OP, 3, 1, std::string("SGD")), lr_(lr), decay_(decay),
           momentum_(momentum), batch_(batch) {
 
         this->_einOp = 0;
         this->_einRep.push_back("ijkm"); // w{t}
-        this->_einRep.push_back("ijkm"); // dw  
+        this->_einRep.push_back("ijkm"); // dw
         this->_einRep.push_back("ijkm"); // momentum
 
         this->_einRep.push_back("ijkm"); // w_{t+1}
     }
     ~SGDOp();
-    float getLR() {
-        return lr_;
-    }
-    float getDecay() {
-        return decay_;
-    }
-    float getMomentum() {
-        return momentum_;
-    }
-    size_t getBatch() {
-        return batch_;
-    }
+    float getLR() { return lr_; }
+    float getDecay() { return decay_; }
+    float getMomentum() { return momentum_; }
+    size_t getBatch() { return batch_; }
     void destroy() {}
 };
 
 class MatrixLogNegLossOp : public Op {
-public:
+  public:
     MatrixLogNegLossOp() : Op(DL_OP, 1, 1, std::string("MatrixLogNegLoss")) {
         this->_inputNDims.push_back(2);
         this->_outputNDims.push_back(0);
     };
     ~MatrixLogNegLossOp();
-    void destroy() {};
+    void destroy(){};
 };
 
 class MatrixTransOp : public Op {
-public:
+  public:
     MatrixTransOp() : Op(DL_OP, 1, 1, std::string("MatrixTrans")) {
         this->_inputNDims.push_back(2);
         this->_outputNDims.push_back(2);
         this->_einOp = 0;
     };
     ~MatrixTransOp();
-    void destroy() {};
+    void destroy(){};
 };
 
 class MatrixAddOp : public Op {
-public:
+  public:
     MatrixAddOp() : Op(DL_OP, 2, 1, std::string("MatrixAdd")) {
         this->_inputNDims.push_back(2);
         this->_outputNDims.push_back(2);
     };
     ~MatrixAddOp();
-    void destroy() {};
+    void destroy(){};
 };
 
 class ElementAddOp : public Op {
-public:
+  public:
     ElementAddOp() : Op(DL_OP, 2, 1, std::string("ElementAdd")) {
         this->_inputNDims.push_back(2);
         this->_outputNDims.push_back(2);
     };
     ~ElementAddOp();
-    void destroy() {};
+    void destroy(){};
 };
 
 class ElementSubOp : public Op {
-public:
+  public:
     ElementSubOp() : Op(DL_OP, 2, 1, std::string("ElementSub")) {
         this->_inputNDims.push_back(2);
         this->_outputNDims.push_back(2);
     };
     ~ElementSubOp();
-    void destroy() {};
+    void destroy(){};
 };
 
 class ElementMulOp : public Op {
-public:
+  public:
     ElementMulOp() : Op(DL_OP, 2, 1, std::string("ElementMul")) {
         this->_inputNDims.push_back(2);
         this->_outputNDims.push_back(2);
 
         this->_einOp = 1;
-        this->_einRep.push_back("bc"); // label  
+        this->_einRep.push_back("bc"); // label
         this->_einRep.push_back("bc"); // origin out
         this->_einRep.push_back("bc"); // grad of input
     };
     ~ElementMulOp();
-    void destroy() {};
+    void destroy(){};
 };
 
 class ElementDivOp : public Op {
-public:
+  public:
     ElementDivOp() : Op(DL_OP, 2, 1, std::string("ElementDiv")) {
         this->_inputNDims.push_back(2);
         this->_outputNDims.push_back(2);
     };
     ~ElementDivOp();
-    void destroy() {};
+    void destroy(){};
 };
 
 class PrintMatrixOp : public Op {
     PrintStreamType type_;
     std::string outfile_;
 
-public:
+  public:
     PrintMatrixOp() : Op(DL_OP, 1, 0, std::string("PrintMatrix")) {
         this->_inputNDims.push_back(2);
     };
     ~PrintMatrixOp();
-    void destroy() {};
+    void destroy(){};
     void setPrintStream(PrintStreamType type, std::string file = "") {
         type_ = type;
         outfile_ = file;
     }
-    PrintStreamType getPrintStreamType() {
-        return type_;
-    }
-    std::string getOutFile() {
-        return outfile_;
-    }
+    PrintStreamType getPrintStreamType() { return type_; }
+    std::string getOutFile() { return outfile_; }
 };
 
 class ScatterOp : public Op {
@@ -417,18 +398,19 @@ class ScatterOp : public Op {
     int axis_{-1};
     int degree_{1};
 
-public:
+  public:
     ScatterOp() : Op(DL_OP, 0, 0, "Scatter"), offset_(0) {}
     ScatterOp(size_t offset) : Op(DL_OP, 0, 0, "Scatter"), offset_(offset) {}
-    ScatterOp(int axis, int degree) : Op(DL_OP, 0, 0, "Scatter"), axis_(axis), degree_(degree) {}
+    ScatterOp(int axis, int degree)
+        : Op(DL_OP, 0, 0, "Scatter"), axis_(axis), degree_(degree) {}
     ~ScatterOp();
 
     std::string getOpInfo() override;
-    size_t getCost(OpNode *, Config& config) override;
-    std::string getCostTrace(OpNode*, Config& config) override;
+    size_t getCost(OpNode *, Config &config) override;
+    std::string getCostTrace(OpNode *, Config &config) override;
 
     // bytes origin tensor
-    static size_t getSimCost(size_t bytes, Config& config, int strategy);
+    static size_t getSimCost(size_t bytes, Config &config, int strategy);
 
     void setOffset(size_t offset) { offset_ = offset; }
     size_t getOffset() { return offset_; }
@@ -446,16 +428,17 @@ class GatherOp : public Op {
     int axis_{-1};
     int degree_{1};
 
-public:
+  public:
     GatherOp() : Op(DL_OP, 0, 0, "Gather"), offset_(0) {}
     GatherOp(size_t offset) : Op(DL_OP, 0, 0, "Gather"), offset_(offset) {}
-    GatherOp(int axis, int degree) : Op(DL_OP, 0, 0, "Gather"), axis_(axis), degree_(degree) {}
+    GatherOp(int axis, int degree)
+        : Op(DL_OP, 0, 0, "Gather"), axis_(axis), degree_(degree) {}
     ~GatherOp();
 
     std::string getOpInfo() override;
-    size_t getCost(OpNode *, Config& config) override;
-    std::string getCostTrace(OpNode*, Config& config) override;
-    static size_t getSimCost(size_t bytes, Config& config, int strategy);
+    size_t getCost(OpNode *, Config &config) override;
+    std::string getCostTrace(OpNode *, Config &config) override;
+    static size_t getSimCost(size_t bytes, Config &config, int strategy);
 
     void setOffset(size_t offset) { offset_ = offset; }
     size_t getOffset() { return offset_; }
@@ -469,40 +452,43 @@ public:
 
 class ReduceOp : public Op {
 
-public:
+  public:
     ReduceOp() : Op(DL_OP, 0, 0, "Reduce") {}
     ~ReduceOp();
     // std::string getOpInfo() override;
-    size_t getCost(OpNode *, Config& config) override;
-    std::string getCostTrace(OpNode*, Config& config) override;
-    static size_t getSimCost(size_t bytes, Config& config, int strategy);
+    size_t getCost(OpNode *, Config &config) override;
+    std::string getCostTrace(OpNode *, Config &config) override;
+    static size_t getSimCost(size_t bytes, Config &config, int strategy);
 };
 
 class BroadcastOp : public Op {
 
-public:
+  public:
     BroadcastOp() : Op(DL_OP, 0, 0, "Broadcast") {}
     ~BroadcastOp();
-    size_t getCost(OpNode *, Config& config) override;
-    std::string getCostTrace(OpNode*, Config& config) override;
-    static size_t getSimCost(size_t bytes, Config& config, int strategy);
+    size_t getCost(OpNode *, Config &config) override;
+    std::string getCostTrace(OpNode *, Config &config) override;
+    static size_t getSimCost(size_t bytes, Config &config, int strategy);
 };
 
-class TransformOp: public Op {
+class TransformOp : public Op {
     int preAxis_{-1};
     int postAxis_{-1};
     int degree_{1};
 
-public:
-    TransformOp() : Op(DL_OP, 0, 0, "Transform"){}
-    TransformOp(int pre_axis, int post_axis, int degree) : Op(DL_OP, 0, 0, "Transform"), preAxis_(pre_axis), postAxis_(post_axis), degree_(degree) {}
+  public:
+    TransformOp() : Op(DL_OP, 0, 0, "Transform") {}
+    TransformOp(int pre_axis, int post_axis, int degree)
+        : Op(DL_OP, 0, 0, "Transform"), preAxis_(pre_axis),
+          postAxis_(post_axis), degree_(degree) {}
     ~TransformOp() {}
 
     std::string getOpInfo() override;
-    size_t getCost(OpNode *, Config& config) override;
-    std::string getCostTrace(OpNode*, Config& config) override;
+    size_t getCost(OpNode *, Config &config) override;
+    std::string getCostTrace(OpNode *, Config &config) override;
 
-    static size_t getSimCost(size_t bytes, Config& config, int pre_strategy, int post_strategy);
+    static size_t getSimCost(size_t bytes, Config &config, int pre_strategy,
+                             int post_strategy);
 
     void setPreAxis(int axis) { preAxis_ = axis; }
     int getPreAxis() { return preAxis_; }
@@ -516,15 +502,11 @@ public:
 class SubGraphOp : public Op {
     IRGraph *graph_;
 
-public:
+  public:
     SubGraphOp() : Op(DL_OP, 0, 0, "SubGraph") {}
     ~SubGraphOp();
-    void setGraph(IRGraph *graph) {
-        graph_ = graph;
-    }
-    IRGraph *getGraph() {
-        return graph_;
-    }
+    void setGraph(IRGraph *graph) { graph_ = graph; }
+    IRGraph *getGraph() { return graph_; }
 };
 
 class Conv2dOp : public Op {
@@ -533,20 +515,20 @@ class Conv2dOp : public Op {
     std::vector<size_t> pads_;
     int group_{1};
 
-public:
+  public:
     Conv2dOp() : Op(DL_OP, 3, 1, std::string("Conv2d")) {
         this->_inputNDims.push_back(4);
         this->_inputNDims.push_back(4);
         this->_inputNDims.push_back(1);
         this->_outputNDims.push_back(4);
 
-        this->_einOp =  1;
-        // warning, strategy will be orderd by char 
+        this->_einOp = 1;
+        // warning, strategy will be orderd by char
         // so data parallel
         this->_einRep.push_back("b__c"); // in
         this->_einRep.push_back("o__c"); // w
-        this->_einRep.push_back("o"); // b 
-        this->_einRep.push_back("b__o"); // out 
+        this->_einRep.push_back("o");    // b
+        this->_einRep.push_back("b__o"); // out
     };
     Conv2dOp(std::vector<size_t> &kernels, std::vector<size_t> &strides,
              std::vector<size_t> &pads)
@@ -559,36 +541,27 @@ public:
         this->_inputNDims.push_back(1);
         this->_outputNDims.push_back(4);
 
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
         this->_einRep.push_back("o__c"); // w
-        this->_einRep.push_back("o"); // b 
-        this->_einRep.push_back("b__o"); // out 
+        this->_einRep.push_back("o");    // b
+        this->_einRep.push_back("b__o"); // out
     }
-    std::vector<size_t> getPads() {
-        return pads_;
-    }
-    std::vector<size_t> getKernels() {
-        return kernels_;
-    }
-    std::vector<size_t> getStrides() {
-        return strides_;
-    }
-    size_t getGroup() {
-        return group_;
-    }
+    std::vector<size_t> getPads() { return pads_; }
+    std::vector<size_t> getKernels() { return kernels_; }
+    std::vector<size_t> getStrides() { return strides_; }
+    size_t getGroup() { return group_; }
     ~Conv2dOp();
     void destroy() override {}
 
     std::string getOpInfo() override;
 
-    void outTensorShapeGen(OpNode* node, size_t index, TensorShape* tShape) override;
+    void outTensorShapeGen(OpNode *node, size_t index,
+                           TensorShape *tShape) override;
 
-    void autoDiff(IRGraph* graph,
-        IRNode* opNode,
-        std::unordered_map<IRNode*, IRNode*>&gradNodeMap) override;
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap) override;
 };
-
 
 class Conv2dGradOp : public Op {
     std::vector<size_t> kernels_;
@@ -597,48 +570,48 @@ class Conv2dGradOp : public Op {
     int group_{1};
 
   public:
-    // infered input/output maybe (5, 3), bias no need ,so we use (4, 3) 
+    // infered input/output maybe (5, 3), bias no need ,so we use (4, 3)
     Conv2dGradOp() : Op(DL_OP, 3, 3, std::string("Conv2dGrad")) {
         this->_inputNDims.push_back(4); // input
-        this->_inputNDims.push_back(4); // weight 
+        this->_inputNDims.push_back(4); // weight
         this->_inputNDims.push_back(4); // outputG
 
         this->_outputNDims.push_back(4); // inputG
-        this->_outputNDims.push_back(4); // weightG 
+        this->_outputNDims.push_back(4); // weightG
         this->_outputNDims.push_back(1); // biasG
 
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
         this->_einRep.push_back("o__c"); // w
-        this->_einRep.push_back("b__o"); // outG 
+        this->_einRep.push_back("b__o"); // outG
 
         this->_einRep.push_back("b__c"); // inG
         this->_einRep.push_back("o__c"); // wG
-        this->_einRep.push_back("o");    // bG 
+        this->_einRep.push_back("o");    // bG
     };
     Conv2dGradOp(std::vector<size_t> &kernels, std::vector<size_t> &strides,
-             std::vector<size_t> &pads)
+                 std::vector<size_t> &pads)
         : Op(DL_OP, 3, 3, std::string("Conv2dGrad")) {
         kernels_.assign(kernels.begin(), kernels.end());
         strides_.assign(strides.begin(), strides.end());
         pads_.assign(pads.begin(), pads.end());
 
         this->_inputNDims.push_back(4); // input
-        this->_inputNDims.push_back(4); // weight 
+        this->_inputNDims.push_back(4); // weight
         this->_inputNDims.push_back(4); // outputG
 
         this->_outputNDims.push_back(4); // inputG
-        this->_outputNDims.push_back(4); // weightG 
+        this->_outputNDims.push_back(4); // weightG
         this->_outputNDims.push_back(1); // biasG
 
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
         this->_einRep.push_back("o__c"); // w
-        this->_einRep.push_back("b__o"); // outG 
+        this->_einRep.push_back("b__o"); // outG
 
         this->_einRep.push_back("b__c"); // inG
         this->_einRep.push_back("o__c"); // wG
-        this->_einRep.push_back("o");    // bG 
+        this->_einRep.push_back("o");    // bG
     }
 
     std::vector<size_t> getPads() { return pads_; }
@@ -651,16 +624,20 @@ class Conv2dGradOp : public Op {
 // https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/kernels/conv_ops_fused_impl.h
 // https://docs.nvidia.com/deeplearning/sdk/cudnn-developer-guide/index.html#cudnnActivationDescriptor_t
 // inherit from Conv2d may be simple
-// but current implementation is not suitable, e.g.initialization of _opClassName 
+// but current implementation is not suitable, e.g.initialization of
+// _opClassName
 class Conv2dWithActivationOp : public Op {
     std::vector<size_t> kernels_;
     std::vector<size_t> strides_;
     std::vector<size_t> pads_;
     int group_{1};
     activation_type activation_{SWC_ACTIVATION_RELU};
-public:
-    Conv2dWithActivationOp(std::vector<size_t> &kernels, std::vector<size_t> &strides,
-             std::vector<size_t> &pads, activation_type activation)
+
+  public:
+    Conv2dWithActivationOp(std::vector<size_t> &kernels,
+                           std::vector<size_t> &strides,
+                           std::vector<size_t> &pads,
+                           activation_type activation)
         : Op(DL_OP, 3, 1, std::string("Conv2dWithActivation")) {
         kernels_.assign(kernels.begin(), kernels.end());
         strides_.assign(strides.begin(), strides.end());
@@ -672,33 +649,23 @@ public:
         this->_inputNDims.push_back(1);
         this->_outputNDims.push_back(4);
 
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
         this->_einRep.push_back("o__c"); // w
-        this->_einRep.push_back("o"); // b 
-        this->_einRep.push_back("b__o"); // out 
+        this->_einRep.push_back("o");    // b
+        this->_einRep.push_back("b__o"); // out
     }
-    std::vector<size_t> getPads() {
-        return pads_;
-    }
-    std::vector<size_t> getKernels() {
-        return kernels_;
-    }
-    std::vector<size_t> getStrides() {
-        return strides_;
-    }
-    size_t getGroup() {
-        return group_;
-    }
-    activation_type getActivationType() { return activation_;}
+    std::vector<size_t> getPads() { return pads_; }
+    std::vector<size_t> getKernels() { return kernels_; }
+    std::vector<size_t> getStrides() { return strides_; }
+    size_t getGroup() { return group_; }
+    activation_type getActivationType() { return activation_; }
 
     ~Conv2dWithActivationOp();
 
-    void autoDiff(IRGraph* graph,
-        IRNode* opNode,
-        std::unordered_map<IRNode*, IRNode*>&gradNodeMap) override;
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap) override;
 };
-
 
 class Conv2dWithActivationGradOp : public Op {
     std::vector<size_t> kernels_;
@@ -708,8 +675,10 @@ class Conv2dWithActivationGradOp : public Op {
     activation_type activation_{SWC_ACTIVATION_RELU};
 
   public:
-    Conv2dWithActivationGradOp(std::vector<size_t> &kernels, std::vector<size_t> &strides,
-             std::vector<size_t> &pads, activation_type activation)
+    Conv2dWithActivationGradOp(std::vector<size_t> &kernels,
+                               std::vector<size_t> &strides,
+                               std::vector<size_t> &pads,
+                               activation_type activation)
         : Op(DL_OP, 3, 3, std::string("Conv2dWithActivationGrad")) {
         kernels_.assign(kernels.begin(), kernels.end());
         strides_.assign(strides.begin(), strides.end());
@@ -717,29 +686,28 @@ class Conv2dWithActivationGradOp : public Op {
         activation_ = activation;
 
         this->_inputNDims.push_back(4); // input
-        this->_inputNDims.push_back(4); // weight 
+        this->_inputNDims.push_back(4); // weight
         this->_inputNDims.push_back(4); // outputG
 
         this->_outputNDims.push_back(4); // inputG
-        this->_outputNDims.push_back(4); // weightG 
+        this->_outputNDims.push_back(4); // weightG
         this->_outputNDims.push_back(1); // biasG
 
-
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
         this->_einRep.push_back("o__c"); // w
-        this->_einRep.push_back("b__o"); // outG 
+        this->_einRep.push_back("b__o"); // outG
 
         this->_einRep.push_back("b__c"); // inG
         this->_einRep.push_back("o__c"); // wG
-        this->_einRep.push_back("c");    // bG 
+        this->_einRep.push_back("c");    // bG
     }
 
     std::vector<size_t> getPads() { return pads_; }
     std::vector<size_t> getKernels() { return kernels_; }
     std::vector<size_t> getStrides() { return strides_; }
     size_t getGroup() { return group_; }
-    activation_type getActivationType() { return activation_;}
+    activation_type getActivationType() { return activation_; }
 
     ~Conv2dWithActivationGradOp();
     void destroy() {}
@@ -747,19 +715,16 @@ class Conv2dWithActivationGradOp : public Op {
 class BatchNormalizationOp : public Op {
     float epsilon_;
 
-public:
+  public:
     BatchNormalizationOp(float eps)
         : Op(DL_OP, 5, 1, std::string("BatchNormalization")) {
         epsilon_ = eps;
         // TODO : dims of input
     }
-    float getEpsilon() {
-        return epsilon_;
-    }
+    float getEpsilon() { return epsilon_; }
     ~BatchNormalizationOp();
     void destroy() {}
 };
-
 
 // TODO: LRN use scale_cache
 class LRNOp : public Op {
@@ -768,33 +733,33 @@ class LRNOp : public Op {
     float k_{1.0};
     size_t windowSize_{2};
 
-public:
+  public:
     LRNOp() : Op(DL_OP, 1, 1, std::string("LRN")) {
 
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
-        this->_einRep.push_back("b__c"); // out 
+        this->_einRep.push_back("b__c"); // out
     }
 
-    LRNOp(float alpha, float beta, float k, size_t n) : Op(DL_OP, 1, 1, std::string("LRN")) {
+    LRNOp(float alpha, float beta, float k, size_t n)
+        : Op(DL_OP, 1, 1, std::string("LRN")) {
         alpha_ = alpha;
-        beta_  = beta;
+        beta_ = beta;
         k_ = k;
         windowSize_ = n;
 
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
-        this->_einRep.push_back("b__c"); // out 
+        this->_einRep.push_back("b__c"); // out
     }
 
     float getAlpha() const { return alpha_; }
     float getBeta() const { return beta_; }
     float getK() const { return k_; }
-    float getN() const {return windowSize_; }
+    float getN() const { return windowSize_; }
 
-    void autoDiff(IRGraph* graph,
-        IRNode* opNode,
-        std::unordered_map<IRNode*, IRNode*>&gradNodeMap) override;
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap) override;
 };
 
 class LRNGradOp : public Op {
@@ -803,36 +768,37 @@ class LRNGradOp : public Op {
     float k_{1.0};
     size_t windowSize_{2};
 
-public:
+  public:
     LRNGradOp() : Op(DL_OP, 3, 1, std::string("LRNGrad")) {
 
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
-        this->_einRep.push_back("b__c"); // out 
-        this->_einRep.push_back("b__c"); // outGrad 
-        
-        this->_einRep.push_back("b__c"); // inGrad 
+        this->_einRep.push_back("b__c"); // out
+        this->_einRep.push_back("b__c"); // outGrad
+
+        this->_einRep.push_back("b__c"); // inGrad
     }
 
-    LRNGradOp(float alpha, float beta, float k, size_t n) : Op(DL_OP, 1, 1, std::string("LRNGrad")) {
+    LRNGradOp(float alpha, float beta, float k, size_t n)
+        : Op(DL_OP, 1, 1, std::string("LRNGrad")) {
         alpha_ = alpha;
-        beta_  = beta;
+        beta_ = beta;
         k_ = k;
         windowSize_ = n;
 
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
-        this->_einRep.push_back("b__c"); // out 
+        this->_einRep.push_back("b__c"); // out
     }
 
     float getAlpha() const { return alpha_; }
     float getBeta() const { return beta_; }
     float getK() const { return k_; }
-    float getN() const {return windowSize_; }
+    float getN() const { return windowSize_; }
 };
 
 class ReluOp : public Op {
-public:
+  public:
     ReluOp() : Op(DL_OP, 1, 1, std::string("Relu")) {
         this->_inputNDims.push_back(4);
         this->_outputNDims.push_back(4);
@@ -844,9 +810,8 @@ public:
     ~ReluOp();
     void checkValid(OpNode *node);
     void destroy() {}
-    void autoDiff(IRGraph* graph,
-        IRNode* opNode,
-        std::unordered_map<IRNode*, IRNode*>&gradNodeMap);
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
 };
 
 class ReluGradOp : public Op {
@@ -873,14 +838,14 @@ class MaxPoolOp : public Op {
     std::vector<size_t> strides_;
     std::vector<size_t> pads_;
 
-public:
+  public:
     MaxPoolOp() : Op(DL_OP, 1, 1, std::string("MaxPool")) {
         this->_inputNDims.push_back(4);
         this->_outputNDims.push_back(4);
 
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
-        this->_einRep.push_back("b__c"); // out 
+        this->_einRep.push_back("b__c"); // out
     }
     MaxPoolOp(std::vector<size_t> &kernels, std::vector<size_t> &strides,
               std::vector<size_t> &pads)
@@ -891,29 +856,23 @@ public:
         this->_inputNDims.push_back(4);
         this->_outputNDims.push_back(4);
 
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
-        this->_einRep.push_back("b__c"); // out 
+        this->_einRep.push_back("b__c"); // out
     }
     ~MaxPoolOp();
-    std::vector<size_t> getPads() {
-        return pads_;
-    }
-    std::vector<size_t> getKernels() {
-        return kernels_;
-    }
-    std::vector<size_t> getStrides() {
-        return strides_;
-    }
+    std::vector<size_t> getPads() { return pads_; }
+    std::vector<size_t> getKernels() { return kernels_; }
+    std::vector<size_t> getStrides() { return strides_; }
     void destroy() override {}
 
     std::string getOpInfo() override;
 
-    void outTensorShapeGen(OpNode* node, size_t index, TensorShape* tShape) override;
+    void outTensorShapeGen(OpNode *node, size_t index,
+                           TensorShape *tShape) override;
 
-    void autoDiff(IRGraph* graph,
-        IRNode* opNode,
-        std::unordered_map<IRNode*, IRNode*>&gradNodeMap) override;
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap) override;
 };
 
 class MaxPoolGradOp : public Op {
@@ -927,17 +886,17 @@ class MaxPoolGradOp : public Op {
         this->_inputNDims.push_back(4); // output
         this->_inputNDims.push_back(4); // outputG
 
-        this->_outputNDims.push_back(4);// inputG
+        this->_outputNDims.push_back(4); // inputG
 
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
-        this->_einRep.push_back("b__c"); // out 
-        this->_einRep.push_back("b__c"); // outG 
+        this->_einRep.push_back("b__c"); // out
+        this->_einRep.push_back("b__c"); // outG
 
-        this->_einRep.push_back("b__c"); // inG 
+        this->_einRep.push_back("b__c"); // inG
     }
     MaxPoolGradOp(std::vector<size_t> &kernels, std::vector<size_t> &strides,
-              std::vector<size_t> &pads)
+                  std::vector<size_t> &pads)
         : Op(DL_OP, 3, 1, std::string("MaxPoolGrad")) {
         kernels_.assign(kernels.begin(), kernels.end());
         strides_.assign(strides.begin(), strides.end());
@@ -947,15 +906,14 @@ class MaxPoolGradOp : public Op {
         this->_inputNDims.push_back(4); // output
         this->_inputNDims.push_back(4); // outputG
 
-        this->_outputNDims.push_back(4);// inputG
+        this->_outputNDims.push_back(4); // inputG
 
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
-        this->_einRep.push_back("b__c"); // out 
-        this->_einRep.push_back("b__c"); // outG 
+        this->_einRep.push_back("b__c"); // out
+        this->_einRep.push_back("b__c"); // outG
 
-        this->_einRep.push_back("b__c"); // inG 
-
+        this->_einRep.push_back("b__c"); // inG
     }
     ~MaxPoolGradOp();
     std::vector<size_t> getPads() { return pads_; }
@@ -969,14 +927,14 @@ class AvgPoolOp : public Op {
     std::vector<size_t> strides_;
     std::vector<size_t> pads_;
 
-public:
+  public:
     AvgPoolOp() : Op(DL_OP, 1, 1, std::string("AveragePool")) {
         this->_inputNDims.push_back(4);
         this->_outputNDims.push_back(4);
 
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
-        this->_einRep.push_back("b__c"); // out 
+        this->_einRep.push_back("b__c"); // out
     }
     AvgPoolOp(std::vector<size_t> &kernels, std::vector<size_t> &strides,
               std::vector<size_t> &pads)
@@ -987,20 +945,14 @@ public:
         this->_inputNDims.push_back(4);
         this->_outputNDims.push_back(4);
 
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
-        this->_einRep.push_back("b__c"); // out 
+        this->_einRep.push_back("b__c"); // out
     }
     ~AvgPoolOp();
-    std::vector<size_t> getPads() {
-        return pads_;
-    }
-    std::vector<size_t> getKernels() {
-        return kernels_;
-    }
-    std::vector<size_t> getStrides() {
-        return strides_;
-    }
+    std::vector<size_t> getPads() { return pads_; }
+    std::vector<size_t> getKernels() { return kernels_; }
+    std::vector<size_t> getStrides() { return strides_; }
     void destroy() {}
 };
 class AvgPoolGradOp : public Op {
@@ -1014,17 +966,17 @@ class AvgPoolGradOp : public Op {
         this->_inputNDims.push_back(4); // output
         this->_inputNDims.push_back(4); // outputG
 
-        this->_outputNDims.push_back(4);// inputG
+        this->_outputNDims.push_back(4); // inputG
 
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
-        this->_einRep.push_back("b__c"); // out 
-        this->_einRep.push_back("b__c"); // outG 
+        this->_einRep.push_back("b__c"); // out
+        this->_einRep.push_back("b__c"); // outG
 
-        this->_einRep.push_back("b__c"); // inG 
+        this->_einRep.push_back("b__c"); // inG
     }
     AvgPoolGradOp(std::vector<size_t> &kernels, std::vector<size_t> &strides,
-              std::vector<size_t> &pads)
+                  std::vector<size_t> &pads)
         : Op(DL_OP, 3, 1, std::string("AveragePoolGrad")) {
         kernels_.assign(kernels.begin(), kernels.end());
         strides_.assign(strides.begin(), strides.end());
@@ -1034,15 +986,14 @@ class AvgPoolGradOp : public Op {
         this->_inputNDims.push_back(4); // output
         this->_inputNDims.push_back(4); // outputG
 
-        this->_outputNDims.push_back(4);// inputG
+        this->_outputNDims.push_back(4); // inputG
 
-        this->_einOp =  1;
+        this->_einOp = 1;
         this->_einRep.push_back("b__c"); // in
-        this->_einRep.push_back("b__c"); // out 
-        this->_einRep.push_back("b__c"); // outG 
+        this->_einRep.push_back("b__c"); // out
+        this->_einRep.push_back("b__c"); // outG
 
-        this->_einRep.push_back("b__c"); // inG 
-
+        this->_einRep.push_back("b__c"); // inG
     }
     ~AvgPoolGradOp();
     std::vector<size_t> getPads() { return pads_; }
@@ -1066,7 +1017,7 @@ BatchedAddOp should be MatrixVectorAddOp, remove
 */
 
 class BatchedReduceAddOp : public Op {
-public:
+  public:
     BatchedReduceAddOp() : Op(DL_OP, 1, 1, std::string("BatchedReduceAdd")) {
         this->_inputNDims.push_back(2);
         this->_outputNDims.push_back(1);
@@ -1079,11 +1030,10 @@ public:
     void destroy() {}
 };
 
-
 class TransposeOp : public Op {
     std::vector<size_t> shuffle_;
 
-public:
+  public:
     TransposeOp(const std::initializer_list<size_t> &shuffle)
         : Op(DL_OP, 1, 1, std::string("Transpose")) {
         this->_inputNDims.push_back(4);
@@ -1093,17 +1043,15 @@ public:
         this->_einOp = 0;
     }
     ~TransposeOp();
-    std::vector<size_t> getShuffle() {
-        return shuffle_;
-    }
+    std::vector<size_t> getShuffle() { return shuffle_; }
     void destroy() {}
 };
-//this may be a tensor op;
+// this may be a tensor op;
 
 class ArgMaxOp : public Op {
     int topK_;
 
-public:
+  public:
     ArgMaxOp(int topK) : Op(DL_OP, 1, 1, std::string("ArgMax")) {
         topK_ = topK;
         this->_einOp = 1;
@@ -1113,18 +1061,16 @@ public:
         this->_einRep.push_back("i_");
     }
     ~ArgMaxOp() {}
-    int getTopK() {
-        return topK_;
-    }
+    int getTopK() { return topK_; }
     void destroy() {}
 };
 
 // currently we let AccuracyOp link to ArgMaxOp.out and label
 // then we get topk accuracy
 // TODO: let accuray link to prob and label
-class AccuracyOp: public Op {
+class AccuracyOp : public Op {
 
-public:
+  public:
     AccuracyOp() : Op(DL_OP, 2, 1, std::string("Accuracy")) {
         this->_einOp = 1;
         this->_einRep.push_back("i_");
@@ -1139,7 +1085,7 @@ public:
  *  \brief currently deubg means print 2D Tensor
  */
 class DebugOp : public Op {
-public:
+  public:
     DebugOp() : Op(DL_OP, 1, 1, std::string("Debug")) {
         this->_einOp = 1;
         this->_einRep.push_back("__");
@@ -1160,33 +1106,33 @@ public:
 //=====================================================
 
 class VectorTanhOp : public Op {
-public:
+  public:
     VectorTanhOp() : Op(DL_OP, 1, 1, std::string("VectorTanh")) {
         this->_inputNDims.push_back(1);
         this->_outputNDims.push_back(1);
     };
     ~VectorTanhOp();
-    void destroy() {};
+    void destroy(){};
 };
 
 class VectorSoftmaxOp : public Op {
-public:
+  public:
     VectorSoftmaxOp() : Op(DL_OP, 1, 1, std::string("VectorSoftmax")) {
         this->_inputNDims.push_back(1);
         this->_outputNDims.push_back(1);
     };
     ~VectorSoftmaxOp();
-    void destroy() {};
+    void destroy(){};
 };
 
 class VectorLogNegLossOp : public Op {
-public:
+  public:
     VectorLogNegLossOp() : Op(DL_OP, 1, 1, std::string("VectorLogNegLoss")) {
         this->_inputNDims.push_back(1);
         this->_outputNDims.push_back(0);
     };
     ~VectorLogNegLossOp();
-    void destroy() {};
+    void destroy(){};
 };
 
 //=====================================================
@@ -1197,13 +1143,13 @@ public:
 //=====================================================
 
 class ScalarTanhOp : public Op {
-public:
+  public:
     ScalarTanhOp() : Op(DL_OP, 1, 1, std::string("ScalarTanh")) {
         this->_inputNDims.push_back(0);
         this->_outputNDims.push_back(0);
     };
     ~ScalarTanhOp();
-    void destroy() {};
+    void destroy(){};
 };
 } // namespace op
 } // namespace swc
