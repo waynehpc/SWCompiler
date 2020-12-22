@@ -13,6 +13,7 @@
 #include <string>
 #include <map>
 #include <climits>
+#include <sstream>
 
 enum class DataType { Float_t, Double_t, Int8_t, Int32_t };
 
@@ -66,12 +67,14 @@ struct Config {
     bool mkldnn{false};
 
     // Nvidia cuda codegen config
+    bool sproc_mgpu{false};
     bool cuda{false};
     bool cublas{false};
     bool cuda_stream{false};
 
     bool mpi{false};
     int mpi_size{1};
+    int ngpus_per_rank{1};
 
     TrainingConfig train_config;
 
@@ -103,6 +106,7 @@ struct Config {
 
     // if true, distributed [sgd or whatever] optimizer 
     bool decentralized_optimizer{false};
+    bool use_ring_allreduce{false};
 };
 
 enum OpType { TENSOR_OP, BASIC_OP, DL_OP };
@@ -128,6 +132,7 @@ typedef enum {
     layout_nc,
     layout_cn
 } mem_layout_t;
+
 const std::map<int, std::string> MEM_LAYOUT = {{layout_default, "default"},
     {layout_nchw, "nchw"},
     {layout_nhwc, "nhwc"},
@@ -161,6 +166,21 @@ struct Device {
     Device(int r = 0, DeviceType t = DeviceType::CPU, int i = 0) : rank{r}, type(t), id(i) {}
     friend bool operator==(const Device &x, const Device &y) {
         return x.rank == y.rank && x.type == y.type && x.id == y.id;
+    }
+    std::string toString() const { 
+        std::ostringstream os;
+        if (type == DeviceType::CPU) {
+            if(rank == INT_MAX)
+                os << "cpup";
+            else
+                os << "cpu" << id;
+        } else if (type == DeviceType::GPU) {
+            if(id == INT_MAX)
+                os << "gpup";
+            else
+                os << "gpu" << id;
+        }
+        return os.str();
     }
 };
 namespace std {
