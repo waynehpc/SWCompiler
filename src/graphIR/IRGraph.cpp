@@ -557,8 +557,9 @@ IRGraph *IRGraph::clone() const {
 
     }
     // clone _input_data_node and _input_label_node
-    graph->setTrainDataNodes(tensors_map.at(_input_label_node),
-        tensors_map.at(_input_data_node));
+    if(_input_data_node && _input_data_node)
+        graph->setTrainDataNodes(tensors_map.at(_input_label_node),
+            tensors_map.at(_input_data_node));
     
     // clone _dispaly_nodes
     for(auto &node : _display_nodes) {
@@ -697,6 +698,23 @@ void IRGraph::elimRedundantScatter() {
         }
          
     } // for loop
+}
+
+void IRGraph::setOpDevLabelByInput() {
+    for (auto &opnode : _ops) {
+        auto *op = opnode->getOp();
+        if(dynamic_cast<ScatterOp*>(op) || dynamic_cast<GatherOp*>(op) 
+        || dynamic_cast<TransformOp*>(op) || dynamic_cast<BroadcastOp*>(op)
+        || dynamic_cast<ReduceOp*>(op)) {
+            continue;
+        }
+        
+        auto *input0 =  (TensorNode*)opnode->getChildNode(0);
+        Device dev = input0->getLabel()->getDeviceLabel();
+        opnode->getLabel()->setDeviceLabel(dev);
+
+        SWLOG_DEBUG(1) << opnode->name() << " " << dev.toString() << "\n";
+    }
 }
 
 } // namespace swc

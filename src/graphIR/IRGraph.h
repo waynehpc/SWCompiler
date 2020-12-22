@@ -176,6 +176,11 @@ class IRGraph {
     // only do this when benchmark
     void elimRedundantScatter();
 
+    // where the op execute, gpu or host?
+    // we may set device label according to its input
+    // mind that communication ops should be excluded
+    void setOpDevLabelByInput();
+
   private:
     std::vector<TensorNode *> _tensors;
     std::vector<OpNode *> _ops;

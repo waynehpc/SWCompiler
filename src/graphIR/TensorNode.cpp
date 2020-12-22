@@ -34,7 +34,9 @@ void TensorNode::destroy() {
 TensorNode *TensorNode::clone() const {
     TensorNode *tn = new TensorNode(name()+"_cp");
     tn->setTensor(tensor_);
-    tn->setLabel(getLabel()); // mainly for training flag
+    // tn->setLabel(getLabel()); // mainly for training flag
+    // 05. 25
+    tn->setLabel(new Label(*getLabel()));
     tn->setExternal(isExternal());
     return tn;
 }
