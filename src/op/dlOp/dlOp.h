@@ -763,12 +763,10 @@ public:
 
 // TODO: LRN use scale_cache
 class LRNOp : public Op {
-    /* not important now
-    float alpha_;
-    float beta_;
-    size_t windowSize_;
-    float k_;
-    */
+    float alpha_{1e-4};
+    float beta_{0.75};
+    float k_{1.0};
+    size_t windowSize_{2};
 
 public:
     LRNOp() : Op(DL_OP, 1, 1, std::string("LRN")) {
@@ -778,30 +776,59 @@ public:
         this->_einRep.push_back("b__c"); // out 
     }
 
+    LRNOp(float alpha, float beta, float k, size_t n) : Op(DL_OP, 1, 1, std::string("LRN")) {
+        alpha_ = alpha;
+        beta_  = beta;
+        k_ = k;
+        windowSize_ = n;
+
+        this->_einOp =  1;
+        this->_einRep.push_back("b__c"); // in
+        this->_einRep.push_back("b__c"); // out 
+    }
+
+    float getAlpha() const { return alpha_; }
+    float getBeta() const { return beta_; }
+    float getK() const { return k_; }
+    float getN() const {return windowSize_; }
+
     void autoDiff(IRGraph* graph,
         IRNode* opNode,
         std::unordered_map<IRNode*, IRNode*>&gradNodeMap) override;
 };
 
 class LRNGradOp : public Op {
-    /* not important now
-    float alpha_;
-    float beta_;
-    size_t windowSize_;
-    float k_;
-    */
+    float alpha_{1e-4};
+    float beta_{0.75};
+    float k_{1.0};
+    size_t windowSize_{2};
 
 public:
-    LRNGradOp() : Op(DL_OP, 2, 1, std::string("LRNGrad")) {
+    LRNGradOp() : Op(DL_OP, 3, 1, std::string("LRNGrad")) {
 
         this->_einOp =  1;
         this->_einRep.push_back("b__c"); // in
-        //this->_einRep.push_back("b__c"); // out 
+        this->_einRep.push_back("b__c"); // out 
         this->_einRep.push_back("b__c"); // outGrad 
-        //this->_einRep.push_back("b__c"); // scale 
-        //
+        
         this->_einRep.push_back("b__c"); // inGrad 
     }
+
+    LRNGradOp(float alpha, float beta, float k, size_t n) : Op(DL_OP, 1, 1, std::string("LRNGrad")) {
+        alpha_ = alpha;
+        beta_  = beta;
+        k_ = k;
+        windowSize_ = n;
+
+        this->_einOp =  1;
+        this->_einRep.push_back("b__c"); // in
+        this->_einRep.push_back("b__c"); // out 
+    }
+
+    float getAlpha() const { return alpha_; }
+    float getBeta() const { return beta_; }
+    float getK() const { return k_; }
+    float getN() const {return windowSize_; }
 };
 
 class ReluOp : public Op {
@@ -824,14 +851,15 @@ public:
 
 class ReluGradOp : public Op {
   public:
-    ReluGradOp() : Op(DL_OP, 2, 1, std::string("ReluGrad")) {
+    ReluGradOp() : Op(DL_OP, 3, 1, std::string("ReluGrad")) {
+        this->_inputNDims.push_back(4);
         this->_inputNDims.push_back(4);
         this->_inputNDims.push_back(4);
         this->_outputNDims.push_back(4);
 
         this->_einOp = 1;
         this->_einRep.push_back("bhwc"); // in
-        // this->_einRep.push_back("nhwc"); // out
+        this->_einRep.push_back("bhwc"); // out
         this->_einRep.push_back("bhwc"); // outGrad
 
         this->_einRep.push_back("bhwc");
@@ -973,6 +1001,53 @@ public:
     std::vector<size_t> getStrides() {
         return strides_;
     }
+    void destroy() {}
+};
+class AvgPoolGradOp : public Op {
+    std::vector<size_t> kernels_;
+    std::vector<size_t> strides_;
+    std::vector<size_t> pads_;
+
+  public:
+    AvgPoolGradOp() : Op(DL_OP, 3, 1, std::string("AveragePoolGrad")) {
+        this->_inputNDims.push_back(4); // input
+        this->_inputNDims.push_back(4); // output
+        this->_inputNDims.push_back(4); // outputG
+
+        this->_outputNDims.push_back(4);// inputG
+
+        this->_einOp =  1;
+        this->_einRep.push_back("b__c"); // in
+        this->_einRep.push_back("b__c"); // out 
+        this->_einRep.push_back("b__c"); // outG 
+
+        this->_einRep.push_back("b__c"); // inG 
+    }
+    AvgPoolGradOp(std::vector<size_t> &kernels, std::vector<size_t> &strides,
+              std::vector<size_t> &pads)
+        : Op(DL_OP, 3, 1, std::string("AveragePoolGrad")) {
+        kernels_.assign(kernels.begin(), kernels.end());
+        strides_.assign(strides.begin(), strides.end());
+        pads_.assign(pads.begin(), pads.end());
+
+        this->_inputNDims.push_back(4); // input
+        this->_inputNDims.push_back(4); // output
+        this->_inputNDims.push_back(4); // outputG
+
+        this->_outputNDims.push_back(4);// inputG
+
+        this->_einOp =  1;
+        this->_einRep.push_back("b__c"); // in
+        this->_einRep.push_back("b__c"); // out 
+        this->_einRep.push_back("b__c"); // outG 
+
+        this->_einRep.push_back("b__c"); // inG 
+
+    }
+    ~AvgPoolGradOp();
+    std::vector<size_t> getPads() { return pads_; }
+    std::vector<size_t> getKernels() { return kernels_; }
+    std::vector<size_t> getStrides() { return strides_; }
     void destroy() {}
 };
 /*

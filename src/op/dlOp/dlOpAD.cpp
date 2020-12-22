@@ -113,7 +113,7 @@ void ReluOp::autoDiff(IRGraph* graph,
 
     auto *N =
         new OpNode(opNode->name() + "_grad", new ReluGradOp());
-    N->exlinkUpperNode(input, outputGrad);
+    N->exlinkUpperNode(input, output, outputGrad);
 
     gradNodeMap[opNode] = N;
     graph->pushOpNode(N);
@@ -384,8 +384,8 @@ void LRNOp::autoDiff(IRGraph* graph, IRNode* opNode, std::unordered_map<IRNode*,
 
     auto *N =
         new OpNode(opNode->name() + "_grad", new LRNGradOp());
-    //N->exlinkUpperNode(input, output, outputGrad);
-    N->exlinkUpperNode(input, outputGrad);
+    N->exlinkUpperNode(input, output, outputGrad);
+//     N->exlinkUpperNode(input, outputGrad);
 
     gradNodeMap[opNode] = N;
     graph->pushOpNode(N);
