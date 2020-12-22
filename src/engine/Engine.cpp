@@ -24,7 +24,7 @@
 #include "SWDSL.h"
 #include "tool/dotGen.h"
 #include "codegen/Codegen.h"
-#include "common.h"
+#include "codegen/CUDACodegen.h"
 #include <map>
 
 namespace swc {
@@ -41,11 +41,17 @@ void Engine::compile() {
     else
         runInferPasses();
 
+    
+    if(config.cuda) {
+        Device gpu0(0, DeviceType::GPU, 0);
+        graph_->setDeviceLabel(gpu0);
+    }
+
     // parallelization should be done 
     // before graph layout transformation
     // since parallel strategies are generated
     // according to einSum representation like "nchw"
-    if(config.mpi) {
+    if(config.mpi || config.sproc_mgpu) {
         runParallelPasses(); 
     }
 
@@ -127,6 +133,7 @@ void Engine::runTrainPasses() {
 }
 
 void Engine::runParallelPasses() {
+    SWLOG_DEBUG(4) << "begin Engine::runParallelPasses()...\n";
 
     PassManager passManager;
 
@@ -142,14 +149,18 @@ void Engine::runParallelPasses() {
 
     passManager.run();
 
-    //dotGen(graph_, "mlp_para_before_elim.dot");
+    // svgGen(graph_, "para_before_elim.dot");
 
     eliming->run();
 
+    graph_->setOpDevLabelByInput();
+    
     // update nodesByTopology 
     // because new nodes added
     graph_->findInOut();
     graph_->updateTopology();
+
+    SWLOG_DEBUG(4) << "end Engine::runParallelPasses()...\n";
 }
 
 void Engine::transformForMKLDNN() {
@@ -408,18 +419,52 @@ void Engine::optimize() {
     elim.run();
 }
 
-std::string Engine::genCode() {
+std::string Engine::genCode(std::string output) {
+    SWLOG_DEBUG(4) << "begin Engine::genCode()...\n";
 
     if(generator_ == nullptr) {
         Config config = graph_->getConfig();
-        if(config.mpi)
+        if(config.mpi) {
             generator_ = new ParallelCodegen(graph_, config);
-        else
+        }
+        else if(config.sproc_mgpu) {
+            generator_ = new CUDACodegen(graph_, config);
+        }
+        else {
             generator_ = new Codegen(graph_, config);
+        }
+            
     }
 
-    std::string code = generator_->generate();
+    std::string code = generator_->generate(output);
     return code;
+
+    SWLOG_DEBUG(4) << "end Engine::genCode()...\n";
+}
+
+std::string Engine::genCode(Config& config, std::string output) {
+    SWLOG_DEBUG(4) << "begin Engine::genCode()...\n";
+
+    graph_->setConfig(config);
+
+    if(generator_){
+        generator_ = nullptr;
+    }
+
+    if(config.mpi) {
+        generator_ = new ParallelCodegen(graph_, config);
+    }
+    else if(config.sproc_mgpu) {
+        generator_ = new CUDACodegen(graph_, config);
+    }
+    else {
+        generator_ = new Codegen(graph_, config);
+    }       
+
+    std::string code = generator_->generate(output);
+    return code;
+
+    SWLOG_DEBUG(4) << "end Engine::genCode()...\n";
 }
 
 } // namespace swc

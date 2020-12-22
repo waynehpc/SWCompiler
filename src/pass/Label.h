@@ -35,6 +35,15 @@ class Label {
 
   public:
     Label() : _toLower(0), _isOut(0), _initTypeLabel(TensorInitType::NONE){};
+    Label(const Label &lab) {
+      _nodeNameLabel = lab._nodeNameLabel;
+      _typeNameLabel = lab._nodeNameLabel;
+      _toLower = lab._toLower;
+      _train = lab._train;
+      _isOut = lab._isOut;
+      _initTypeLabel = lab._initTypeLabel;
+      _dev = lab._dev;
+    }
     virtual ~Label(){};
 
     void destroy() { this->~Label(); };

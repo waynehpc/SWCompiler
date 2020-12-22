@@ -231,7 +231,8 @@ public:
         //vgg b32_p4
     //    auto vgg_b32_p4 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 1, 2, 1, 2, 0, 0, 0, 2, 1, 1, 1, 0, 0, 2, 0, 0, 0, 0, 0, 2, 1, 1, 2, 1, 0, 1, 1, 1, 2, 1, 1, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         
-        auto selected = dp_seed;
+        // auto selected = dp_seed;
+        auto selected = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         assert(selected.size() == sss->getOpNum() && "illegal handcraft strategy, please check");
         sss->addStrategyToGraph(selected);
     }
@@ -298,7 +299,7 @@ public:
             0.5, /*crossOverRate*/
             0.1, /*mutationRate*/
             20, /*numberElites*/
-            100, /*numGenerations*/
+            150, /*numGenerations*/
             sss /*StrategySearchSpace*/
             );
         
@@ -314,14 +315,23 @@ public:
 
         auto config = _graph->getConfig();
 
-        auto parallel_degree = config.mpi_size;
-        assert(parallel_degree>1 && "error, degree of parallellism unset, please set config.mpi_size");
+        // auto parallel_degree = config.mpi_size;
+        // assert(parallel_degree>1 && "error, degree of parallellism unset, please set config.mpi_size");
+        int parallel_degree = 1;
+        if(config.mpi && !config.sproc_mgpu) {
+            parallel_degree = config.mpi_size;
+        } else if (!config.mpi && config.sproc_mgpu) {
+            parallel_degree = config.ngpus_per_rank;
+        } else {
+            assert(0==1 && "ParallelLabelingPass::run(), illegal parallel config");
+        }
 
         if(config.geneticalgo_opt_parallel) {
             runOptimizedLabeling();
         }else if(config.handcraft_parallel) {
             runHandCraftLabeling();
         }else {
+            // default config, including force_data_parallel=true
             runLabeling(parallel_degree);
         }
 
@@ -329,10 +339,7 @@ public:
         SWLOG_DEBUG(4) << "Finish Paralleling pass. " << std::endl;
 
     }
-
-
-
 };
 
-}
+} // namespace swc
 #endif

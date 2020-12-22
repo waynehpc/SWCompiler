@@ -7,6 +7,7 @@
 #ifndef ENGINE_H_
 #define ENGINE_H_
 #include <string>
+#include "common.h"
 
 namespace swc {
 namespace codegen{
@@ -33,8 +34,10 @@ public:
     void runParallelPasses();
 
     virtual void transformForMKLDNN();
+    virtual void transformForCUDA() {}
     virtual void optimize();
-    std::string genCode();
+    std::string genCode(std::string out="Graph.cpp");
+    std::string genCode(Config& config, std::string out="Graph.cpp");
 
     void setCodegenerator(codegen::Codegen *codegen) { generator_ = codegen; }
 private:

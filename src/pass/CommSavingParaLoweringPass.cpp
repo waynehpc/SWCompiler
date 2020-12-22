@@ -10,7 +10,7 @@
 namespace swc {
 namespace pass {
 
-void ParallelLoweringPass::runExpCommSavingLowering(int parallel_num) {
+void ParallelLoweringPass::runExpCommSavingLowering() {
     auto config = _graph->getConfig();
 
     //------------------------step1---------------------------------
@@ -79,7 +79,7 @@ void ParallelLoweringPass::runExpCommSavingLowering(int parallel_num) {
         for(auto strategy : iter.second) {
             if(tlabel->strategySize() == 0) {
                 // the same as tlabel->getAppiled() == false
-                ForkPattern* forkpattern = new ForkPattern(tnode, parallel_num);
+                ForkPattern* forkpattern = new ForkPattern(tnode, config);
                 forkpattern->apply(strategy, _graph);
 
                 // after apply, tlabel->getCurrentNode() points to new par_tnode
@@ -96,7 +96,7 @@ void ParallelLoweringPass::runExpCommSavingLowering(int parallel_num) {
                 SWLOG_DEBUG(4) << tnode->name() << " select best transform source\n"; 
                 int pre_strategy = tlabel->selectTransPreStrategy(strategy); 
 
-                TransformPattern * transformpattern = new TransformPattern(tnode, parallel_num);
+                TransformPattern * transformpattern = new TransformPattern(tnode, config);
                 transformpattern->apply(pre_strategy, strategy, _graph);
 
                 TensorNode *par_tnode = tlabel->getCurrentNode();
@@ -194,7 +194,7 @@ void ParallelLoweringPass::runExpCommSavingLowering(int parallel_num) {
 
             if(tlabel->strategySize() == 0) {
                 // the same as tlabel->getAppiled() == false
-                ForkPattern* forkpattern = new ForkPattern(tnode, parallel_num);
+                ForkPattern* forkpattern = new ForkPattern(tnode, config);
                 forkpattern->apply(strategy, _graph);
 
                 // after apply, tlabel->getCurrentNode() points to new par_tnode
@@ -221,29 +221,49 @@ void ParallelLoweringPass::runExpCommSavingLowering(int parallel_num) {
                 SWLOG_DEBUG(4) << tnode->name() << " select best transform source\n"; 
                 int pre_strategy = tlabel->selectTransPreStrategy(strategy); 
                  
-                if(pre_strategy == -2) {
-                    ForkPattern* forkpattern = new ForkPattern(tnode, parallel_num);
-                    forkpattern->apply(strategy, _graph);
+                if(config.mpi) {
 
-                    TensorNode *par_tnode = tlabel->getCurrentNode();
-                    tnode->replaceUseKeepOrder(curOpNode, par_tnode); 
+                    if(pre_strategy == -2) {
 
-                    tlabel->insertStrategy(strategy, par_tnode);
-                    continue;
+                        if(config.use_ring_allreduce && strategy==-1) {
+                            TransformPattern * transformpattern = new TransformPattern(tnode, config);
+                            transformpattern->apply(pre_strategy, strategy, _graph);
+
+                            TensorNode *par_tnode = tlabel->getCurrentNode();
+                            tnode->replaceUseKeepOrder(curOpNode, par_tnode); 
+
+                            tlabel->insertStrategy(strategy, par_tnode);
+
+                            continue;
+                        }
+                        SWLOG_DEBUG(8) << tnode->name() << " of " << curOpNode->name() << " strategy -2 => " << strategy << "\n";
+
+                        ForkPattern* forkpattern = new ForkPattern(tnode, config);
+                        forkpattern->apply(strategy, _graph);
+
+                        TensorNode *par_tnode = tlabel->getCurrentNode();
+                        tnode->replaceUseKeepOrder(curOpNode, par_tnode); 
+
+                        tlabel->insertStrategy(strategy, par_tnode);
+
+                        continue;
+                    }
+                    if(pre_strategy>=0 && strategy == -1) {
+                        SWLOG_DEBUG(8) << tnode->name() << " of " << curOpNode->name() << " strategy " << pre_strategy << " => -1\n";
+                        // joinpattern fllowed by forkpattern...
+                        ForkPattern* forkpattern = new ForkPattern(tnode, config);
+                        forkpattern->apply(strategy, _graph);
+
+                        TensorNode *par_tnode = tlabel->getCurrentNode();
+                        tnode->replaceUseKeepOrder(curOpNode, par_tnode); 
+
+                        tlabel->insertStrategy(strategy, par_tnode);
+                        continue;
+                    }
                 }
-                if(pre_strategy>=0 && strategy == -1) {
-                    // joinpattern fllowed by forkpattern...
-                    ForkPattern* forkpattern = new ForkPattern(tnode, parallel_num);
-                    forkpattern->apply(strategy, _graph);
 
-                    TensorNode *par_tnode = tlabel->getCurrentNode();
-                    tnode->replaceUseKeepOrder(curOpNode, par_tnode); 
-
-                    tlabel->insertStrategy(strategy, par_tnode);
-                    continue;
-                }
                 // transfrom pattern
-                TransformPattern * transformpattern = new TransformPattern(tnode, parallel_num);
+                TransformPattern * transformpattern = new TransformPattern(tnode, config);
                 transformpattern->apply(pre_strategy, strategy, _graph);
 
                 TensorNode *par_tnode = tlabel->getCurrentNode();
@@ -295,7 +315,7 @@ void ParallelLoweringPass::runExpCommSavingLowering(int parallel_num) {
             // However, we run on opnods in topoOrder, so children should not have run 
             assert(tlabel->strategySize()==0 && "out tensornodes shouldn't be parallelized before me"); 
 
-            JoinPattern* joinpattern = new JoinPattern(tnode, parallel_num);
+            JoinPattern* joinpattern = new JoinPattern(tnode, config);
             joinpattern->apply(strategy, _graph);
 
             TensorNode *par_tnode = tlabel->getCurrentNode();

@@ -32,19 +32,18 @@ public:
     void run() {
         SWLOG_DEBUG(6) << "Start Paralleling Pass.\n";
 
-        auto parallel_degree = _graph->getConfig().mpi_size;
-        assert(parallel_degree>1 && "error, degree of parallellism unset, please set config.mpi_size");
+        // auto parallel_degree = _graph->getConfig().mpi_size;
+        // assert(parallel_degree>1 && "error, degree of parallellism unset, please set config.mpi_size");
 
         auto config = _graph->getConfig();
 
         if(config.parallel_preference == ParallelStrategy::MEM_SAVING) {
             SWLOG_DEBUG(6) << "runMemSavingLowering\n";
-            runMemSavingLowering(parallel_degree);
+            runMemSavingLowering();
         }
         else if(config.parallel_preference == ParallelStrategy::COMM_SAVING) {
             SWLOG_DEBUG(6) << "runCommSavingLowering\n";
-            //runCommSavingLowering(parallel_degree);
-            runExpCommSavingLowering(parallel_degree);
+            runExpCommSavingLowering();
         }
 
         _graph->updateTopology();
@@ -57,8 +56,8 @@ public:
     }
 
     // to be depreciated
-    void runMemSavingLowering(int parallel_num) {
-
+    void runMemSavingLowering() {
+        auto config = _graph->getConfig();
         // get tensor nodes and op nodes in topology order
         std::vector<TensorNode * > topoTensorNodes;
         std::vector<OpNode *> topoOpNodes;
@@ -113,7 +112,7 @@ public:
                 strategyindex++;
 
                 if(!tlabel->isApplied()) {
-                    ForkPattern* forkpattern = new ForkPattern(originNode, parallel_num);
+                    ForkPattern* forkpattern = new ForkPattern(originNode, config);
                     forkpattern->apply(strategy, _graph);
                     curOpNode ->destroyUpperNode(originNode);
                     curOpNode -> exlinkUpperNode(tlabel->getCurrentNode());
@@ -123,7 +122,7 @@ public:
                         << " -> " << strategy << "\n";
                     if(tlabel->getCurrentStrategy() == -2) {
                         // joinpattern fllowed by forkpatter...
-                        ForkPattern* forkpattern = new ForkPattern(originNode, parallel_num);
+                        ForkPattern* forkpattern = new ForkPattern(originNode, config);
                         forkpattern->apply(strategy, _graph);
                         curOpNode ->destroyUpperNode(originNode);
                         curOpNode -> exlinkUpperNode(tlabel->getCurrentNode());
@@ -131,14 +130,14 @@ public:
                     }
                     if(tlabel->getCurrentStrategy()>=0 && strategy == -1) {
                         // joinpattern fllowed by forkpattern...
-                        ForkPattern* forkpattern = new ForkPattern(originNode, parallel_num);
+                        ForkPattern* forkpattern = new ForkPattern(originNode, config);
                         forkpattern->apply(strategy, _graph);
                         curOpNode ->destroyUpperNode(originNode);
                         curOpNode -> exlinkUpperNode(tlabel->getCurrentNode());
                         continue;
                     }
                     // transfrom pattern
-                    TransformPattern * transformpattern = new TransformPattern(originNode, parallel_num);
+                    TransformPattern * transformpattern = new TransformPattern(originNode, config);
                     transformpattern->apply(tlabel->getCurrentStrategy(), strategy, _graph);
                     curOpNode -> destroyUpperNode(originNode);
                     curOpNode ->exlinkUpperNode(tlabel->getCurrentNode());
@@ -169,7 +168,7 @@ public:
                 int strategy = opstrategy[strategyindex];
                 strategyindex++;
                 if(!tlabel->isApplied()) {
-                    JoinPattern* joinpattern = new JoinPattern(originNode, parallel_num);
+                    JoinPattern* joinpattern = new JoinPattern(originNode, config);
                     joinpattern->apply(strategy, _graph);
                     originNode->destroyUpperNode(curOpNode);
                     tlabel->getCurrentNode()->exlinkUpperNode(curOpNode);
@@ -178,7 +177,7 @@ public:
                 } else if(strategy != tlabel -> getCurrentStrategy()) {
                     SWLOG_DEBUG(4) << originNode->name() << " strategy " << tlabel->getCurrentStrategy()
                         << " -> " << strategy << "\n";
-                    TransformPattern * transformpattern = new TransformPattern(originNode, parallel_num);
+                    TransformPattern * transformpattern = new TransformPattern(originNode, config);
                     transformpattern->apply(strategy, _graph);
                     originNode->destroyUpperNode(curOpNode);
                     tlabel->getCurrentNode()->exlinkUpperNode(curOpNode);
@@ -195,9 +194,11 @@ public:
 
     }
 
-    void runExpCommSavingLowering(int parallel_num);
+    void runExpCommSavingLowering();
 
-    void runCommSavingLowering(int parallel_num) {
+    void runCommSavingLowering() {
+        auto config = _graph->getConfig();
+
         // get tensor nodes and op nodes in topology order
         std::vector<TensorNode * > topoTensorNodes;
         std::vector<OpNode *> topoOpNodes;
@@ -247,7 +248,7 @@ public:
 
                 if(tlabel->strategySize() == 0) {
                     // the same as tlabel->getAppiled() == false
-                    ForkPattern* forkpattern = new ForkPattern(tnode, parallel_num);
+                    ForkPattern* forkpattern = new ForkPattern(tnode, config);
                     forkpattern->apply(strategy, _graph);
 
                     // after apply, tlabel->getCurrentNode() points to new par_tnode
@@ -275,7 +276,7 @@ public:
                     int pre_strategy = tlabel->selectTransPreStrategy(strategy); 
                      
                     if(pre_strategy == -2) {
-                        ForkPattern* forkpattern = new ForkPattern(tnode, parallel_num);
+                        ForkPattern* forkpattern = new ForkPattern(tnode, config);
                         forkpattern->apply(strategy, _graph);
 
                         TensorNode *par_tnode = tlabel->getCurrentNode();
@@ -286,7 +287,7 @@ public:
                     }
                     if(pre_strategy>=0 && strategy == -1) {
                         // joinpattern fllowed by forkpattern...
-                        ForkPattern* forkpattern = new ForkPattern(tnode, parallel_num);
+                        ForkPattern* forkpattern = new ForkPattern(tnode, config);
                         forkpattern->apply(strategy, _graph);
 
                         TensorNode *par_tnode = tlabel->getCurrentNode();
@@ -296,7 +297,7 @@ public:
                         continue;
                     }
                     // transfrom pattern
-                    TransformPattern * transformpattern = new TransformPattern(tnode, parallel_num);
+                    TransformPattern * transformpattern = new TransformPattern(tnode, config);
                     transformpattern->apply(pre_strategy, strategy, _graph);
 
                     TensorNode *par_tnode = tlabel->getCurrentNode();
@@ -318,7 +319,7 @@ public:
                 // However, we run on opnods in topoOrder, so children should not have run 
                 assert(tlabel->strategySize()==0 && "out tensornodes shouldn't be parallelized before me"); 
 
-                JoinPattern* joinpattern = new JoinPattern(tnode, parallel_num);
+                JoinPattern* joinpattern = new JoinPattern(tnode, config);
                 joinpattern->apply(strategy, _graph);
 
                 TensorNode *par_tnode = tlabel->getCurrentNode();
