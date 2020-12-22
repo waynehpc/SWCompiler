@@ -7,25 +7,22 @@
 #        Create: 2019-09-23 19:48:25
 # Last Modified: 2019-09-23 19:48:25
 ***********************************************/
-#include <vector>
-#include <map>
 #include "graphIR/OpNode.h"
-namespace swc{
+#include <map>
+#include <vector>
+namespace swc {
 
-class DecideStrategy{
+class DecideStrategy {
 
+    void rewrite() {}
+    void compare() {}
+    void makeSearchSpace() {}
+    void getFinalStrategy() {
 
-void rewrite(){}
-void compare(){}
-void makeSearchSpace(){}
-void getFinalStrategy(){
-    
- 
-        //make indexspace 
-        //compare 
-        //rewrite
-    }    
-    
+        // make indexspace
+        // compare
+        // rewrite
+    }
 };
 
-}
+} // namespace swc

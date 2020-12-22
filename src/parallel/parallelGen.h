@@ -8,20 +8,19 @@
 #ifndef _PARALLELGEN_H
 #define _PARALLELGEN_H
 
-#include <string>
-#include <map>
-#include <vector>
 #include "op/Op.h"
-namespace swc{
+#include <map>
+#include <string>
+#include <vector>
+namespace swc {
 
-    class ParallelGen{
+class ParallelGen {
 
-        public:
+  public:
+    static std::vector<std::vector<int>> generateStgy(OpNode *node);
+    static std::vector<int> generateDataParStgy(OpNode *opnode);
+};
 
-        static std::vector<std::vector<int> > generateStgy(OpNode* node);
-        static std::vector<int> generateDataParStgy(OpNode* opnode);
-    };
-
-}
+} // namespace swc
 
 #endif
