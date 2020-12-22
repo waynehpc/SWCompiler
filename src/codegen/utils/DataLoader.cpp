@@ -33,6 +33,9 @@ DataLoader::DataLoader(std::string &filename, BytesProto label_proto,
     _data_bytes = _data_size * getProtoBytes(_data_bytes_proto);
 
     _max_epoch = epochs;
+
+    // open file stream and dump summary
+    check_init();
 }
 
 size_t DataLoader::getProtoBytes(BytesProto proto) {
@@ -47,7 +50,7 @@ size_t DataLoader::getProtoBytes(BytesProto proto) {
 }
 
 void DataLoader::check_init() {
-    if(init_flag)
+    if (init_flag)
         return;
 
     _stream.open(_datafile, std::ios::binary);
@@ -64,7 +67,6 @@ void DataLoader::check_init() {
               << "_label_bytes: " << _label_bytes << "\n"
               << "_data_size: " << _data_size << "\n"
               << "_data_bytes: " << _data_bytes << "\n";
-
 }
 
 void DataLoader::close() {
@@ -118,9 +120,11 @@ void DataLoader::read(size_t num) {
 }
 
 bool DataLoader::next(int *label_batch, float *data_batch) {
-    check_init();
+    // if check_init() in next(), calling shift() before next() will be invalid
+    // check_init();
 
-    // std::cout << "loader want to fill " << label_batch << " and " << data_batch;
+    // std::cout << "loader want to fill " << label_batch << " and " <<
+    // data_batch;
     if (_epoch == _max_epoch) {
         close();
         return false;

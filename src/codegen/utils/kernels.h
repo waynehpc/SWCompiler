@@ -19,7 +19,8 @@ void initTensorXavier(T *data, size_t size, float filterSize) {
     }
 }
 
-template <typename T> void initTensorConstant(T *data, size_t size, float value) {
+template <typename T>
+void initTensorConstant(T *data, size_t size, float value) {
     std::fill(&data[0], &data[0] + size, value);
 }
 
@@ -102,7 +103,8 @@ void matrixSoftmax_f(int m, int n, const float *a, int lda, float *b, int ldb) {
     }
 }
 
-void matrixSoftmaxWithLoss_f(int m, int n, const float *a, int lda, float *b, int ldb, const int *selected, float* loss) {
+void matrixSoftmaxWithLoss_f(int m, int n, const float *a, int lda, float *b,
+                             int ldb, const int *selected, float *loss) {
     *loss = 0;
     for (int i = 0; i < m; i++) {
         float max_ = A(i, 0);
@@ -121,7 +123,7 @@ void matrixSoftmaxWithLoss_f(int m, int n, const float *a, int lda, float *b, in
         int k = selected[i];
         *loss += logf(sum * expf(max_)) - A(i, k);
     }
-    //loss https://blog.csdn.net/Iriving_shu/article/details/78609409
+    // loss https://blog.csdn.net/Iriving_shu/article/details/78609409
     // log(sigma(e^z_i)) - z_k (k-selected)
     *loss /= m;
 }
@@ -140,8 +142,8 @@ void matrixSoftmaxGrad_f(int m, int n, float *a, int lda, const float *b,
     }
 }
 
-void matrixSoftmaxWithLossGrad_f(int m, int n, float *a, int lda, const float *b,
-                         int ldb, const int *selected) {
+void matrixSoftmaxWithLossGrad_f(int m, int n, float *a, int lda,
+                                 const float *b, int ldb, const int *selected) {
     for (int i = 0; i < m; i++) {
         for (int j = 0; j < n; j++) {
             float delta = (selected[i] == j);
@@ -243,10 +245,11 @@ void conv2d_f(float *output, const float *input, const float *filter,
 }
 
 void conv2dGrad_f(float *inputG, float *filterG, float *biasG,
-                const float* outputG, const float *input, const float *filter,
-              const size_t *odims, const size_t *idims,
-              const size_t *fdims, const size_t *bdims, const size_t *kernels,
-              const size_t *strides, const size_t *pads, const size_t group) {
+                  const float *outputG, const float *input, const float *filter,
+                  const size_t *odims, const size_t *idims, const size_t *fdims,
+                  const size_t *bdims, const size_t *kernels,
+                  const size_t *strides, const size_t *pads,
+                  const size_t group) {
     size_t batch = idims[0];
     size_t inC = idims[3];
     size_t oC = odims[3];
@@ -266,7 +269,6 @@ void conv2dGrad_f(float *inputG, float *filterG, float *biasG,
 
     // for each img
     for (size_t n = 0; n < batch; n++) {
-
 
         // for each group
         for (size_t g = 0; g < group; g++) {
@@ -302,23 +304,23 @@ void conv2dGrad_f(float *inputG, float *filterG, float *biasG,
 
                                 // for each input channel per group
                                 for (size_t ci = 0; ci < inCG; ci++) {
-                                    inputG[iIdx_base + ci] += filter[fIdx_base + ci] * outputG[oIdx];
-                                    filterG[fIdx_base + ci] += input[iIdx_base + ci] * outputG[oIdx];
+                                    inputG[iIdx_base + ci] +=
+                                        filter[fIdx_base + ci] * outputG[oIdx];
+                                    filterG[fIdx_base + ci] +=
+                                        input[iIdx_base + ci] * outputG[oIdx];
                                 }
 
-                                if(kx==0 && ky==0) {
+                                if (kx == 0 && ky == 0) {
                                     biasG[co] += outputG[oIdx];
                                 }
                             } // W
                         }     // H
-                    }   //kw
-                } // kh
-            }     // Co
-        }         // group
-    }             // N
+                    }         // kw
+                }             // kh
+            }                 // Co
+        }                     // group
+    }                         // N
 }
-
-
 
 void maxpool_f(const float *input, float *output, const size_t *idims,
                const size_t *odims, const size_t *kernels,
@@ -365,22 +367,21 @@ void maxpool_f(const float *input, float *output, const size_t *idims,
                                 uninit = false;
                             }
                         }
-
                     }
 
                     output[oIdx] = max;
 
                 } // C
-            } // W
-        }     // H
-    }         // N
+            }     // W
+        }         // H
+    }             // N
 }
 
 // 未记录maxpool输出对应原始输入的xy，因此必不可少重复maxpool的流程
-void maxpoolGrad_f(float *inputG, const float *outputG,
-               const float *input, const size_t *idims,/*idims = iGdims*/
-               const size_t *odims, const size_t *kernels,
-               const size_t *strides, const size_t *pads) {
+void maxpoolGrad_f(float *inputG, const float *outputG, const float *input,
+                   const size_t *idims, /*idims = iGdims*/
+                   const size_t *odims, const size_t *kernels,
+                   const size_t *strides, const size_t *pads) {
     size_t kernel_h = kernels[0];
     size_t kernel_w = kernels[1];
     size_t stride_h = strides[0];
@@ -436,9 +437,9 @@ void maxpoolGrad_f(float *inputG, const float *outputG,
                     inputG[iIdx] += outputG[oIdx];
 
                 } // C
-            } // W
-        }     // H
-    }         // N
+            }     // W
+        }         // H
+    }             // N
 }
 
 void avgpool_f(const float *input, float *output, const size_t *idims,
@@ -551,22 +552,22 @@ void batchedadd_f(float *dest, const float *batch, const float *slice,
     }
 }
 
-void batchedreduceadd_f(float *dest, const float *batch, size_t numSlice, size_t sliceSize) {
-    for (size_t n = 0; n < numSlice; n++) {
-        float sum = 0;
-        size_t base = n * sliceSize;
-        for (size_t i = 0; i < sliceSize; i++) {
-            sum += batch[base+i];
+void batchedreduceadd_f(float *dest, const float *batch, size_t numSlice,
+                        size_t sliceSize) {
+    for (size_t i = 0; i < sliceSize; i++) {
+        dest[i] = 0;
+        for (size_t n = 0; n < numSlice; n++) {
+            dest[i] += batch[n * sliceSize + i];
         }
-        dest[n] = sum;
     }
 }
 
-void sgd_f(size_t size, float *out, float *w, float *dw, float *dw_mom, float lr, float decay, float momentum, size_t batch) {
+void sgd_f(size_t size, float *out, float *w, float *dw, float *dw_mom,
+           float lr, float decay, float momentum, size_t batch) {
     float neglr = -lr / batch;
-    for(int i=0; i<size; i++){
+    for (int i = 0; i < size; i++) {
 
-        float negDelta = (w[i]*decay + dw[i]) * neglr + dw_mom[i]*momentum;
+        float negDelta = (w[i] * decay + dw[i]) * neglr + dw_mom[i] * momentum;
         dw_mom[i] = negDelta;
         out[i] += negDelta;
     }
@@ -583,8 +584,9 @@ void relu_f(const float *src, float *dest, size_t size) {
 // src: original input
 // destGrad: grad of original output
 // elementwise, if value of src[:] > 0, let destGrad pass, or 0
-void reluGrad_f(float *srcGrad, const float *src, const float *destGrad, size_t size) {
-    for(size_t i=0; i<size; i++) {
+void reluGrad_f(float *srcGrad, const float *src, const float *destGrad,
+                size_t size) {
+    for (size_t i = 0; i < size; i++) {
         srcGrad[i] = (src[i] > 0) ? destGrad[i] : 0;
     }
 }
@@ -596,43 +598,45 @@ void vecAdd_f(int size, float *a, float *b, float *c) {
 }
 
 /**
-* reference: Caffe
-*/
+ * reference: Caffe
+ */
 void argMax_i(const float *input, int *idx, int m, int n, int top_k) {
-    for(int i=0; i<m; i++) {
+    for (int i = 0; i < m; i++) {
         std::vector<std::pair<float, int>> value_idx(n);
-        for(int j=0; j<n; j++) {
-            value_idx[j] = std::make_pair(input[i*n+j], j);
+        for (int j = 0; j < n; j++) {
+            value_idx[j] = std::make_pair(input[i * n + j], j);
         }
-        std::partial_sort(value_idx.begin(), value_idx.begin()+top_k, value_idx.end(), std::greater<std::pair<float, int>>());
+        std::partial_sort(value_idx.begin(), value_idx.begin() + top_k,
+                          value_idx.end(),
+                          std::greater<std::pair<float, int>>());
 
-        for(int j=0; j<top_k; j++) {
-            idx[i*top_k+j] = value_idx[j].second;
+        for (int j = 0; j < top_k; j++) {
+            idx[i * top_k + j] = value_idx[j].second;
         }
     }
 }
 
 // pred : m * n prediction of label
 // label: m * 1 label
-void accuracy_i(const int* pred, const int *label, int *accum_cnt, int m, int n) {
-    for(int i=0; i<m; i++) {
+void accuracy_i(const int *pred, const int *label, int *accum_cnt, int m,
+                int n) {
+    for (int i = 0; i < m; i++) {
         accum_cnt[1] += 1; // cnt
-        for(int j=0; j<n; j++) {
-            if(pred[i*n+j] == label[i]) {
-                accum_cnt[0] += 1; //right_cnt
+        for (int j = 0; j < n; j++) {
+            if (pred[i * n + j] == label[i]) {
+                accum_cnt[0] += 1; // right_cnt
                 break;
             }
         }
     }
 }
 
-template <typename T>
-void printMatrix(const T *a, int m, int n) {
+template <typename T> void printMatrix(const T *a, int m, int n) {
     std::cout.flags(std::ios::fixed);
     std::cout.precision(3);
     for (int i = 0; i < m; i++) {
         for (int j = 0; j < n; j++) {
-            std::cout << a[i*n+j] << " ";
+            std::cout << a[i * n + j] << " ";
         }
         std::cout << std::endl;
     }
