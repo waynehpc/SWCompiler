@@ -111,15 +111,14 @@ int main() {
     pass::Optimizer *opt = new pass::Optimizer(mlp);
     opt->runOptimizer();
 
-
     // manully label parallel strategy for opnodes
     // remind that lowered nodes cannot simply take
     // the same strategyLabel
 
     // fc0->setStrategyLabel(new StrategyLabel({0, -1, -1, 0}));
-    auto *fc0_mm = (OpNode*)mlp->getNodeByName("fc0_mm");
-    auto *fc0_add = (OpNode*)mlp->getNodeByName("fc0_add");
-    if(fc0_mm==NULL || fc0_add==NULL) {
+    auto *fc0_mm = (OpNode *)mlp->getNodeByName("fc0_mm");
+    auto *fc0_add = (OpNode *)mlp->getNodeByName("fc0_add");
+    if (fc0_mm == NULL || fc0_add == NULL) {
         SWLOG_ERROR << "cannot find lowered nodes for fcbias\n";
         exit(1);
     }
@@ -131,9 +130,9 @@ int main() {
     // tanh0->setStrategyLabel(new StrategyLabel({1, 1}));
 
     // fc1->setStrategyLabel(new StrategyLabel({0, -1, -1, 0}));
-    auto *fc1_mm = (OpNode*)mlp->getNodeByName("fc1_mm");
-    auto *fc1_add = (OpNode*)mlp->getNodeByName("fc1_add");
-    if(fc1_mm==NULL || fc1_add==NULL) {
+    auto *fc1_mm = (OpNode *)mlp->getNodeByName("fc1_mm");
+    auto *fc1_add = (OpNode *)mlp->getNodeByName("fc1_add");
+    if (fc1_mm == NULL || fc1_add == NULL) {
         SWLOG_ERROR << "cannot find lowered nodes for fcbias\n";
         exit(1);
     }
@@ -147,8 +146,8 @@ int main() {
     // passManager.add(new ParallelingPass(mlp));
     // !!! is a must for EliminationPass, or all nodes
     // will be eliminated.
-    //SETOUT(mlp, data4);
-    //SETOUT(mlp, top3_t);
+    // SETOUT(mlp, data4);
+    // SETOUT(mlp, top3_t);
     SETOUT(mlp, placeholder);
     passManager.add(new EliminationPass(mlp));
     passManager.add(new RenamingNodePass(mlp));

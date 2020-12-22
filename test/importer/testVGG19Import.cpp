@@ -1,8 +1,8 @@
 /*************************************************************************
-	> File Name: test/importer/testVGG19Import.cpp
-	> Author: wayne
-	> Mail:  
-	> Created Time: Mon 23 Sep 2019 02:54:46 AM UTC
+        > File Name: test/importer/testVGG19Import.cpp
+        > Author: wayne
+        > Mail:
+        > Created Time: Mon 23 Sep 2019 02:54:46 AM UTC
  ************************************************************************/
 
 #include "SWC.h"
@@ -28,8 +28,8 @@ int main() {
     auto *argmax_o = new OpNode("argmax", new ArgMaxOp(10));
     argmax_o->exlinkUpperNode(softmax_t);
 
-    auto *top3_t =
-        new TensorNode("top3", new Tensor({1, 10}, DataType::Int32_t), argmax_o);
+    auto *top3_t = new TensorNode(
+        "top3", new Tensor({1, 10}, DataType::Int32_t), argmax_o);
 
     auto *print_o = new OpNode("print", new DebugOp());
     print_o->exlinkUpperNode(top3_t);
@@ -50,7 +50,7 @@ int main() {
     config.mkldnn = true;
     graph->setConfig(config);
 
-    Engine engine(graph); 
+    Engine engine(graph);
     engine.compile();
 
     dotGen(graph, "vgg19-compiled.dot");

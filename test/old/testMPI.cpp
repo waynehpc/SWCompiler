@@ -62,7 +62,7 @@ int main() {
     TENSOR(weight1, 512, 10);
     TENSOR(bias1, 10);
     weight1_Tensor->setTensorInit(TensorInitType::FILE,
-                                   "input/mlp_weight1.bin");
+                                  "input/mlp_weight1.bin");
     bias1_Tensor->setTensorInit(TensorInitType::FILE, "input/mlp_bias1.bin");
 
     OP(fc1, MatrixMatrixFCBiasOp);

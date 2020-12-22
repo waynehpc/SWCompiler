@@ -84,7 +84,6 @@ int main() {
     TENSOR(loss, 1);
     LINKUPPER(loss, softmax);
 
-
     GpT(mlp, data3, data4, weight1, bias1, label, loss);
     GpO(mlp, fc1, softmax);
 
@@ -117,13 +116,14 @@ int main() {
     TRAIN(mlp, "sgd", 0.001, 0.001, 0.9, 8);
 
     TensorNode *data_input = (TensorNode *)mlp_train->getNodeByName("data0");
-    TensorNode *label_input = (TensorNode *)mlp_train->getNodeByName("selected");
+    TensorNode *label_input =
+        (TensorNode *)mlp_train->getNodeByName("selected");
     TensorNode *train_loss = (TensorNode *)mlp_train->getNodeByName("loss");
-    if(data_input == nullptr){
+    if (data_input == nullptr) {
         std::cout << "no train-data node named data0\n";
         return 0;
     }
-    if(label_input == nullptr){
+    if (label_input == nullptr) {
         std::cout << "no train-label node named data0\n";
         return 0;
     }
@@ -151,7 +151,7 @@ int main() {
     passManager.run();
 
     elim.run();
-    //passManager.add((OptimizePass *)&elim);
+    // passManager.add((OptimizePass *)&elim);
 
     // CHECKG(mlp_train);
 
@@ -168,7 +168,8 @@ int main() {
     config.train_config.display = 500;
 
     mlp_train->updateTopology();
-    codegen::ParallelCodegen *cg = new codegen::ParallelCodegen(mlp_train, config);
+    codegen::ParallelCodegen *cg =
+        new codegen::ParallelCodegen(mlp_train, config);
 
     string code = cg->generate();
     // cout << code;

@@ -1,8 +1,8 @@
 /*************************************************************************
-	> File Name: test/testVGGTrain.cpp
-	> Author: wayne
-	> Mail:  
-	> Created Time: Mon 23 Sep 2019 01:22:47 PM UTC
+        > File Name: test/vgg19ga.cpp
+        > Author: wayne
+        > Mail:
+        > Created Time: Mon 23 Sep 2019 01:22:47 PM UTC
  ************************************************************************/
 
 #include "SWC.h"
@@ -13,15 +13,15 @@ using namespace swc::op;
 using namespace swc::pass;
 using namespace std;
 
-#define MINIBATCH 16 
+#define MINIBATCH 32
+#define PARA_DEGREE 2
 
-int main()
-{
+int main() {
     TENSOR(data, MINIBATCH, 224, 224, 3);
 
     TENSOR(conv1_1_w, 64, 3, 3, 3);
     TENSOR(conv1_1_b, 64);
-    INIT(conv1_1_w, TensorInitType::XAVIER, 3*3*3); // fanIn
+    INIT(conv1_1_w, TensorInitType::XAVIER, 3 * 3 * 3); // fanIn
     INIT(conv1_1_b, TensorInitType::CONSTANT, 0);
     conv1_1_w->setTraining(1);
     conv1_1_b->setTraining(1);
@@ -40,7 +40,7 @@ int main()
 
     TENSOR(conv1_2_w, 64, 3, 3, 64);
     TENSOR(conv1_2_b, 64);
-    INIT(conv1_2_w, TensorInitType::XAVIER, 3*3*64); // fanIn
+    INIT(conv1_2_w, TensorInitType::XAVIER, 3 * 3 * 64); // fanIn
     INIT(conv1_2_b, TensorInitType::CONSTANT, 0);
     conv1_2_w->setTraining(1);
     conv1_2_b->setTraining(1);
@@ -65,10 +65,9 @@ int main()
     TENSOR(pool1, 0);
     LINKUPPER(pool1, pool1_o);
 
-
     TENSOR(conv2_1_w, 128, 3, 3, 64);
     TENSOR(conv2_1_b, 128);
-    INIT(conv2_1_w, TensorInitType::XAVIER, 3*3*64); // fanIn
+    INIT(conv2_1_w, TensorInitType::XAVIER, 3 * 3 * 64); // fanIn
     INIT(conv2_1_b, TensorInitType::CONSTANT, 0);
     conv2_1_w->setTraining(1);
     conv2_1_b->setTraining(1);
@@ -87,7 +86,7 @@ int main()
 
     TENSOR(conv2_2_w, 128, 3, 3, 128);
     TENSOR(conv2_2_b, 128);
-    INIT(conv2_2_w, TensorInitType::XAVIER, 3*3*128); // fanIn
+    INIT(conv2_2_w, TensorInitType::XAVIER, 3 * 3 * 128); // fanIn
     INIT(conv2_2_b, TensorInitType::CONSTANT, 0);
     conv2_2_w->setTraining(1);
     conv2_2_b->setTraining(1);
@@ -112,10 +111,9 @@ int main()
     TENSOR(pool2, 0);
     LINKUPPER(pool2, pool2_o);
 
-
     TENSOR(conv3_1_w, 256, 3, 3, 128);
     TENSOR(conv3_1_b, 256);
-    INIT(conv3_1_w, TensorInitType::XAVIER, 3*3*128); // fanIn
+    INIT(conv3_1_w, TensorInitType::XAVIER, 3 * 3 * 128); // fanIn
     INIT(conv3_1_b, TensorInitType::CONSTANT, 0);
     conv3_1_w->setTraining(1);
     conv3_1_b->setTraining(1);
@@ -132,10 +130,9 @@ int main()
     TENSOR(relu3_1, 0);
     LINKUPPER(relu3_1, relu3_1_o);
 
-
     TENSOR(conv3_2_w, 256, 3, 3, 256);
     TENSOR(conv3_2_b, 256);
-    INIT(conv3_2_w, TensorInitType::XAVIER, 3*3*256); // fanIn
+    INIT(conv3_2_w, TensorInitType::XAVIER, 3 * 3 * 256); // fanIn
     INIT(conv3_2_b, TensorInitType::CONSTANT, 0);
     conv3_2_w->setTraining(1);
     conv3_2_b->setTraining(1);
@@ -154,7 +151,7 @@ int main()
 
     TENSOR(conv3_3_w, 256, 3, 3, 256);
     TENSOR(conv3_3_b, 256);
-    INIT(conv3_3_w, TensorInitType::XAVIER, 3*3*256); // fanIn
+    INIT(conv3_3_w, TensorInitType::XAVIER, 3 * 3 * 256); // fanIn
     INIT(conv3_3_b, TensorInitType::CONSTANT, 0);
     conv3_3_w->setTraining(1);
     conv3_3_b->setTraining(1);
@@ -173,7 +170,7 @@ int main()
 
     TENSOR(conv3_4_w, 256, 3, 3, 256);
     TENSOR(conv3_4_b, 256);
-    INIT(conv3_4_w, TensorInitType::XAVIER, 3*3*256); // fanIn
+    INIT(conv3_4_w, TensorInitType::XAVIER, 3 * 3 * 256); // fanIn
     INIT(conv3_4_b, TensorInitType::CONSTANT, 0);
     conv3_4_w->setTraining(1);
     conv3_4_b->setTraining(1);
@@ -198,10 +195,9 @@ int main()
     TENSOR(pool3, 0);
     LINKUPPER(pool3, pool3_o);
 
-
     TENSOR(conv4_1_w, 512, 3, 3, 256);
     TENSOR(conv4_1_b, 512);
-    INIT(conv4_1_w, TensorInitType::XAVIER, 3*3*256); // fanIn
+    INIT(conv4_1_w, TensorInitType::XAVIER, 3 * 3 * 256); // fanIn
     INIT(conv4_1_b, TensorInitType::CONSTANT, 0);
     conv4_1_w->setTraining(1);
     conv4_1_b->setTraining(1);
@@ -218,10 +214,9 @@ int main()
     TENSOR(relu4_1, 0);
     LINKUPPER(relu4_1, relu4_1_o);
 
-
     TENSOR(conv4_2_w, 512, 3, 3, 512);
     TENSOR(conv4_2_b, 512);
-    INIT(conv4_2_w, TensorInitType::XAVIER, 3*3*512); // fanIn
+    INIT(conv4_2_w, TensorInitType::XAVIER, 3 * 3 * 512); // fanIn
     INIT(conv4_2_b, TensorInitType::CONSTANT, 0);
     conv4_2_w->setTraining(1);
     conv4_2_b->setTraining(1);
@@ -238,10 +233,9 @@ int main()
     TENSOR(relu4_2, 0);
     LINKUPPER(relu4_2, relu4_2_o);
 
-
     TENSOR(conv4_3_w, 512, 3, 3, 512);
     TENSOR(conv4_3_b, 512);
-    INIT(conv4_3_w, TensorInitType::XAVIER, 3*3*512); // fanIn
+    INIT(conv4_3_w, TensorInitType::XAVIER, 3 * 3 * 512); // fanIn
     INIT(conv4_3_b, TensorInitType::CONSTANT, 0);
     conv4_3_w->setTraining(1);
     conv4_3_b->setTraining(1);
@@ -260,7 +254,7 @@ int main()
 
     TENSOR(conv4_4_w, 512, 3, 3, 512);
     TENSOR(conv4_4_b, 512);
-    INIT(conv4_4_w, TensorInitType::XAVIER, 3*3*512); // fanIn
+    INIT(conv4_4_w, TensorInitType::XAVIER, 3 * 3 * 512); // fanIn
     INIT(conv4_4_b, TensorInitType::CONSTANT, 0);
     conv4_4_w->setTraining(1);
     conv4_4_b->setTraining(1);
@@ -285,10 +279,9 @@ int main()
     TENSOR(pool4, 0);
     LINKUPPER(pool4, pool4_o);
 
-
     TENSOR(conv5_1_w, 512, 3, 3, 512);
     TENSOR(conv5_1_b, 512);
-    INIT(conv5_1_w, TensorInitType::XAVIER, 3*3*512); // fanIn
+    INIT(conv5_1_w, TensorInitType::XAVIER, 3 * 3 * 512); // fanIn
     INIT(conv5_1_b, TensorInitType::CONSTANT, 0);
     conv5_1_w->setTraining(1);
     conv5_1_b->setTraining(1);
@@ -305,10 +298,9 @@ int main()
     TENSOR(relu5_1, 0);
     LINKUPPER(relu5_1, relu5_1_o);
 
-
     TENSOR(conv5_2_w, 512, 3, 3, 512);
     TENSOR(conv5_2_b, 512);
-    INIT(conv5_2_w, TensorInitType::XAVIER, 3*3*512); // fanIn
+    INIT(conv5_2_w, TensorInitType::XAVIER, 3 * 3 * 512); // fanIn
     INIT(conv5_2_b, TensorInitType::CONSTANT, 0);
     conv5_2_w->setTraining(1);
     conv5_2_b->setTraining(1);
@@ -327,7 +319,7 @@ int main()
 
     TENSOR(conv5_3_w, 512, 3, 3, 512);
     TENSOR(conv5_3_b, 512);
-    INIT(conv5_3_w, TensorInitType::XAVIER, 3*3*512); // fanIn
+    INIT(conv5_3_w, TensorInitType::XAVIER, 3 * 3 * 512); // fanIn
     INIT(conv5_3_b, TensorInitType::CONSTANT, 0);
     conv5_3_w->setTraining(1);
     conv5_3_b->setTraining(1);
@@ -346,7 +338,7 @@ int main()
 
     TENSOR(conv5_4_w, 512, 3, 3, 512);
     TENSOR(conv5_4_b, 512);
-    INIT(conv5_4_w, TensorInitType::XAVIER, 3*3*512); // fanIn
+    INIT(conv5_4_w, TensorInitType::XAVIER, 3 * 3 * 512); // fanIn
     INIT(conv5_4_b, TensorInitType::CONSTANT, 0);
     conv5_4_w->setTraining(1);
     conv5_4_b->setTraining(1);
@@ -370,7 +362,6 @@ int main()
     LINKUPPER(pool5_o, relu5_4);
     TENSOR(pool5, 0);
     LINKUPPER(pool5, pool5_o);
-
 
     TENSOR(fc6_w, 0, 4096);
     TENSOR(fc6_b, 4096);
@@ -416,7 +407,6 @@ int main()
     TENSOR(dropout7, 0);
     LINKUPPER(dropout7, dropout7_o);
 
-
     TENSOR(fc8_w, 0, 1000);
     TENSOR(fc8_b, 1000);
     INIT(fc8_w, TensorInitType::XAVIER, 4096); // fanIn
@@ -427,7 +417,6 @@ int main()
     LINKUPPER(fc8_o, dropout7, fc8_w, fc8_b);
     TENSOR(fc8, 0);
     LINKUPPER(fc8, fc8_o);
-
 
     Tensor *label_t = new Tensor({MINIBATCH}, DataType::Int32_t);
     TensorNode *label = new TensorNode("selected", label_t);
@@ -440,64 +429,32 @@ int main()
     LINKUPPER(loss, softmax);
 
     G(vgg19);
-    GpT(vgg19,
-            data, conv1_1_w, conv1_1_b, conv1_1, relu1_1, 
-            conv1_2_w, conv1_2_b, conv1_2, relu1_2, 
-            pool1,
-            conv2_1_w, conv2_1_b, conv2_1, relu2_1, 
-            conv2_2_w, conv2_2_b, conv2_2, relu2_2, 
-            pool2,
-            conv3_1_w, conv3_1_b, conv3_1, relu3_1, 
-            conv3_2_w, conv3_2_b, conv3_2, relu3_2, 
-            conv3_3_w, conv3_3_b, conv3_3, relu3_3, 
-            conv3_4_w, conv3_4_b, conv3_4, relu3_4, 
-            pool3,
-            conv4_1_w, conv4_1_b, conv4_1, relu4_1, 
-            conv4_2_w, conv4_2_b, conv4_2, relu4_2, 
-            conv4_3_w, conv4_3_b, conv4_3, relu4_3, 
-            conv4_4_w, conv4_4_b, conv4_4, relu4_4, 
-            pool4,
-            conv5_1_w, conv5_1_b, conv5_1, relu5_1, 
-            conv5_2_w, conv5_2_b, conv5_2, relu5_2, 
-            conv5_3_w, conv5_3_b, conv5_3, relu5_3, 
-            conv5_4_w, conv5_4_b, conv5_4, relu5_4, 
-            pool5,
-            fc6, fc6_w, fc6_b, relu6, dropout6, dropout6_mask,
-            fc7, fc7_w, fc7_b, relu7, dropout7, dropout7_mask,
-            fc8, fc8_w, fc8_b,
-    		label, prob, loss);
-    GpO(vgg19,
-            conv1_1_o, relu1_1_o,
-            conv1_2_o, relu1_2_o,
-            pool1_o,
-            conv2_1_o, relu2_1_o,
-            conv2_2_o, relu2_2_o,
-            pool2_o,
-            conv3_1_o, relu3_1_o,
-            conv3_2_o, relu3_2_o,
-            conv3_3_o, relu3_3_o,
-            conv3_4_o, relu3_4_o,
-            pool3_o,
-            conv4_1_o, relu4_1_o,
-            conv4_2_o, relu4_2_o,
-            conv4_3_o, relu4_3_o,
-            conv4_4_o, relu4_4_o,
-            pool4_o,
-            conv5_1_o, relu5_1_o,
-            conv5_2_o, relu5_2_o,
-            conv5_3_o, relu5_3_o,
-            conv5_4_o, relu5_4_o,
-            pool5_o,
-            fc6_o, relu6_o, dropout6_o,
-            fc7_o, relu7_o, dropout7_o,
-            fc8_o,
-            softmax);
+    GpT(vgg19, data, conv1_1_w, conv1_1_b, conv1_1, relu1_1, conv1_2_w,
+        conv1_2_b, conv1_2, relu1_2, pool1, conv2_1_w, conv2_1_b, conv2_1,
+        relu2_1, conv2_2_w, conv2_2_b, conv2_2, relu2_2, pool2, conv3_1_w,
+        conv3_1_b, conv3_1, relu3_1, conv3_2_w, conv3_2_b, conv3_2, relu3_2,
+        conv3_3_w, conv3_3_b, conv3_3, relu3_3, conv3_4_w, conv3_4_b, conv3_4,
+        relu3_4, pool3, conv4_1_w, conv4_1_b, conv4_1, relu4_1, conv4_2_w,
+        conv4_2_b, conv4_2, relu4_2, conv4_3_w, conv4_3_b, conv4_3, relu4_3,
+        conv4_4_w, conv4_4_b, conv4_4, relu4_4, pool4, conv5_1_w, conv5_1_b,
+        conv5_1, relu5_1, conv5_2_w, conv5_2_b, conv5_2, relu5_2, conv5_3_w,
+        conv5_3_b, conv5_3, relu5_3, conv5_4_w, conv5_4_b, conv5_4, relu5_4,
+        pool5, fc6, fc6_w, fc6_b, relu6, dropout6, dropout6_mask, fc7, fc7_w,
+        fc7_b, relu7, dropout7, dropout7_mask, fc8, fc8_w, fc8_b, label, prob,
+        loss);
+    GpO(vgg19, conv1_1_o, relu1_1_o, conv1_2_o, relu1_2_o, pool1_o, conv2_1_o,
+        relu2_1_o, conv2_2_o, relu2_2_o, pool2_o, conv3_1_o, relu3_1_o,
+        conv3_2_o, relu3_2_o, conv3_3_o, relu3_3_o, conv3_4_o, relu3_4_o,
+        pool3_o, conv4_1_o, relu4_1_o, conv4_2_o, relu4_2_o, conv4_3_o,
+        relu4_3_o, conv4_4_o, relu4_4_o, pool4_o, conv5_1_o, relu5_1_o,
+        conv5_2_o, relu5_2_o, conv5_3_o, relu5_3_o, conv5_4_o, relu5_4_o,
+        pool5_o, fc6_o, relu6_o, dropout6_o, fc7_o, relu7_o, dropout7_o, fc8_o,
+        softmax);
 
     vgg19->findInOut();
     vgg19->updateTopology();
 
     vgg19->initTensorNodes();
-
 
     vgg19->setTrainDataNodes(label, data);
     vgg19->addDisplayTensorNodes(loss);
@@ -507,7 +464,7 @@ int main()
     config.train_mode = true;
     // config.mkldnn = true;
     config.mpi = true;
-    config.mpi_size = 4;
+    config.mpi_size = PARA_DEGREE;
 
     config.train_config.optimizer = "sgd";
     config.train_config.train_data_file = "mnist_labels_images.bin";
@@ -515,39 +472,41 @@ int main()
     config.train_config.data_bytes = BytesProto::FOUR_BYTES_AS_FLOAT;
     config.train_config.train_data_samples = 60000;
     // config.train_config.snapshot = 1000;
-    config.train_config.max_iters = 100;
+    config.train_config.max_iters = 10;
     config.train_config.display = 50;
 
-    // config.compute_op_annotation = true;
+    config.compute_op_annotation = true;
     // config.comm_op_annotation = true;
-    
+
     config.parallel_preference = COMM_SAVING;
     // config.parallel_preference = MEM_SAVING;
-     
+
     /*when benchmark enabled, disable emit some code*/
     config.benchmark = true;
     /* not do lowering for node liek FC, FCGrad etc.*/
     config.enable_lowering = false;
 
     /* about parallel strategy*/
-    config.force_data_parallel = true;
-    // config.geneticalgo_opt_parallel = true;
+    // config.force_data_parallel = true;
+    config.geneticalgo_opt_parallel = true;
     // config.handcraft_parallel = true;
 
     // optimzer
     config.decentralized_optimizer = true;
+    config.use_ring_allreduce = true;
+
     vgg19->setConfig(config);
 
     std::cout << "vgg_b" << MINIBATCH << "_p" << config.mpi_size << "\n";
 
     vgg19->setConfig(config);
 
-    svgGen(vgg19, "vgg19_infer.dot");
+    // svgGen(vgg19, "vgg19_infer.dot");
 
     Engine engine(vgg19);
     engine.compile();
 
-    dotGen(vgg19, "vgg19_train.dot");
+    // dotGen(vgg19, "vgg19_train.dot");
     cout << vgg19->getCommTrace() << "\n";
     cout << vgg19->getCommCost() << "\n";
 

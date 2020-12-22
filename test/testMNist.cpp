@@ -1,29 +1,28 @@
 /*************************************************************************
-	> File Name: testMNist.cpp
-	> Author: cryinlaugh
-	> Mail: cryinlaugh@gmail.com
-	> Created Time: Thu 23 May 2019 08:35:52 AM UTC
+        > File Name: testMNist.cpp
+        > Author: cryinlaugh
+        > Mail: cryinlaugh@gmail.com
+        > Created Time: Thu 23 May 2019 08:35:52 AM UTC
  ************************************************************************/
 
-#include<iostream>
 #include "SWC.h"
-
+#include <iostream>
 
 using namespace swc;
 using namespace swc::op;
 using namespace std;
 
-int main(){
-
+int main() {
 
     //============================
     // Example of LeNet-5 network for MNist
-    //  
+    //
     // 2 convolutional layers + 2 pooling layer + 2 mlp layers
     // ====Conv Layer l1 ====
-    // Params: batchsize, inputChannel, outputChannel, inputH, inputW, kernelSizeH, kernelSizeW, paddingH, paddingW, strideH, strideW
-    // Input data: batchsize*1*32*32 (data0)
-    // Weight data: 6*5*5 conv kernels + 6 bias (weight0, bias0)
+    // Params: batchsize, inputChannel, outputChannel, inputH, inputW,
+    // kernelSizeH, kernelSizeW, paddingH, paddingW, strideH, strideW Input
+    // data: batchsize*1*32*32 (data0) Weight data: 6*5*5 conv kernels + 6 bias
+    // (weight0, bias0)
     //
     // ====Pool layer l2 ====
     // Params: Max, poolingSizeH, poolingSizeW
@@ -31,12 +30,13 @@ int main(){
     //
     // ====Relu layer ====
     // Input data: batchsize*6*14*14 (data2)
-    // 
+    //
     // ====Conv Layer l3 ====
-    // Params: batchsize, inputChannel, outputChannel, inputH, inputW, kernelSizeH, kernelSizeW, paddingH, paddingW, strideH, strideW
-    // Input data: batchsize*6*14*14 (data3)
-    // Weight data: 16*5*5 conv kernels + 16 bias (weight1, bias1)
-    // 
+    // Params: batchsize, inputChannel, outputChannel, inputH, inputW,
+    // kernelSizeH, kernelSizeW, paddingH, paddingW, strideH, strideW Input
+    // data: batchsize*6*14*14 (data3) Weight data: 16*5*5 conv kernels + 16
+    // bias (weight1, bias1)
+    //
     // ====Pool layer l4====
     // Params: Max, batchsize, poolingSizeH, poolingSizeW
     // Input data: batchsize*16*10*10 (data4)
@@ -102,7 +102,7 @@ int main(){
     //              \          /
     //               \        /
     //                \      /
-    //                 O:mlp_0  -- T:bias_2  
+    //                 O:mlp_0  -- T:bias_2
     //                    |
     //                 T:data_7
     //                    |
@@ -130,7 +130,7 @@ int main(){
     //
     //=============================
 
-    SWLOG_INFO<<"Start generating graph..."<<endl;
+    SWLOG_INFO << "Start generating graph..." << endl;
 
     TENSOR(data0, 256, 1, 32, 32);
     INIT(data0, TensorInitType::FILE, "mnist_images_8.bin");
@@ -141,10 +141,10 @@ int main(){
     weight0->setTraining(1);
     bias0->setTraining(1);
 
-    OP(conv0, Conv2dOp); 
+    OP(conv0, Conv2dOp);
     LINKUPPER(conv0, data0, weight0, bias0);
 
-    TENSOR(data1,256, 6,28,28);
+    TENSOR(data1, 256, 6, 28, 28);
     LINKUPPER(data1, conv0);
 
     OP(pool0, MaxPoolOp);
@@ -159,7 +159,7 @@ int main(){
     TENSOR(data3, 256, 6, 14, 14);
     LINKUPPER(data3, relu0);
 
-    TENSOR(weight1, 6,16,5,5);
+    TENSOR(weight1, 6, 16, 5, 5);
     INIT(weight1, TensorInitType::XAVIER, 0.2);
 
     TENSOR(bias1, 16);
@@ -167,12 +167,12 @@ int main(){
     weight1->setTraining(1);
     bias1->setTraining(1);
 
-    OP(conv1, Conv2dOp); 
+    OP(conv1, Conv2dOp);
     LINKUPPER(conv1, data3, weight1, bias1);
 
-    TENSOR(data4, 256, 16,10,10);
+    TENSOR(data4, 256, 16, 10, 10);
     LINKUPPER(data4, conv1);
-    
+
     OP(pool1, MaxPoolOp);
     LINKUPPER(pool1, data4);
 
@@ -184,13 +184,13 @@ int main(){
 
     TENSOR(data6, 256, 16, 5, 5);
     LINKUPPER(data6, relu1);
-    
+
     DYOP(des1, TensorDescendOp, 4, 2, 4);
     LINKUPPER(des1, data6);
-    
+
     TENSOR(data6des, 256, 400);
     LINKUPPER(data6des, des1);
-    
+
     TENSOR(weight2, 400, 120);
     INIT(weight2, TensorInitType::XAVIER, 0.1);
 
@@ -199,7 +199,7 @@ int main(){
 
     weight2->setTraining(1);
     bias2->setTraining(1);
-   
+
     OP(mlp0, MatrixMatrixFCBiasOp);
     LINKUPPER(mlp0, data6des, weight2, bias2);
 
@@ -220,7 +220,7 @@ int main(){
 
     weight3->setTraining(1);
     bias3->setTraining(1);
-    
+
     OP(mlp1, MatrixMatrixFCBiasOp);
     LINKUPPER(mlp1, data8, weight3, bias3);
 
@@ -237,7 +237,7 @@ int main(){
     INIT(weight4, TensorInitType::XAVIER, 0.3);
 
     weight4->setTraining(1);
-    
+
     OP(mlp2, MatrixMatrixFCOp);
     LINKUPPER(mlp2, data10, weight4);
 
@@ -246,7 +246,7 @@ int main(){
 
     TENSOR(label, 256, 10);
     INIT(label, TensorInitType::FILE, "mnist_images_8_label.bin");
-    
+
     OP(softmax0, MatrixSoftmaxWithLossOp);
     LINKUPPER(softmax0, data11, label);
 
@@ -255,40 +255,27 @@ int main(){
     LINKUPPER(prob, softmax0);
     LINKUPPER(loss, softmax0);
 
-
     G(lenet5);
-    GpT(lenet5, data0, data1,
-            data2, data3, data4,
-            data5, data6, data6des, data7,
-            data8, data9, data10,
-            data11, label, 
-            weight0, weight1, weight2, weight3, weight4,
-            bias0, bias1, bias2, bias3,
-            prob, loss);
-    GpO(lenet5, conv0, conv1,
-            pool0, pool1, des1,
-            relu0, relu1, relu2, relu3,
-            mlp0, mlp1, mlp2,
-            softmax0);
+    GpT(lenet5, data0, data1, data2, data3, data4, data5, data6, data6des,
+        data7, data8, data9, data10, data11, label, weight0, weight1, weight2,
+        weight3, weight4, bias0, bias1, bias2, bias3, prob, loss);
+    GpO(lenet5, conv0, conv1, pool0, pool1, des1, relu0, relu1, relu2, relu3,
+        mlp0, mlp1, mlp2, softmax0);
 
-    
     SETOUT(lenet5, prob);
-    
+
     lenet5->findInOut();
     lenet5->updateTopology();
 
     swc::pass::EliminationPass elim(lenet5);
     elim.run();
 
-    //TRAIN(lenet5, "SGD");
+    // TRAIN(lenet5, "SGD");
 
-    //lenet5_train->updateTopology();
-    
-    //dotGen(lenet5_train);
+    // lenet5_train->updateTopology();
+
+    // dotGen(lenet5_train);
     dotGen(lenet5);
 
-    SWLOG_INFO<<"Start generating graph..."<<endl;
-
-
-
+    SWLOG_INFO << "Start generating graph..." << endl;
 }

@@ -55,7 +55,8 @@ int main() {
 
     TENSOR(weight1, 512, 10);
     TENSOR(bias1, 10);
-    weight1_Tensor->setTensorInit(TensorInitType::FILE, "input/mlp_weight1.bin");
+    weight1_Tensor->setTensorInit(TensorInitType::FILE,
+                                  "input/mlp_weight1.bin");
     bias1_Tensor->setTensorInit(TensorInitType::FILE, "input/mlp_bias1.bin");
 
     OP(fc1, MatrixMatrixFCBiasOp);
@@ -102,16 +103,14 @@ int main() {
     config.mpi_size = 2;
     mlp->setConfig(config);
 
-    //data0->pushParentNode();
+    // data0->pushParentNode();
 
-    //StrategyLabel* slabel = new StrategyLabel();
-    //slabel->setStrategy({0,-1,0});
-    //fc0->setStrategyLabel(new StrategyLabel({0, -1, -1, 0}));
-    //tanh0->setStrategyLabel(new StrategyLabel({0, 0}));
-    //fc1->setStrategyLabel(new StrategyLabel({0, -1, -1, 0}));
-    //softmax0->setStrategyLabel(new StrategyLabel({1, 1}));
-
-
+    // StrategyLabel* slabel = new StrategyLabel();
+    // slabel->setStrategy({0,-1,0});
+    // fc0->setStrategyLabel(new StrategyLabel({0, -1, -1, 0}));
+    // tanh0->setStrategyLabel(new StrategyLabel({0, 0}));
+    // fc1->setStrategyLabel(new StrategyLabel({0, -1, -1, 0}));
+    // softmax0->setStrategyLabel(new StrategyLabel({1, 1}));
 
     swc::pass::LabelingPass labelingpass(mlp);
     labelingpass.run();
@@ -120,13 +119,11 @@ int main() {
     loweringpass.run();
     labelingpass.run();
 
-
     swc::pass::ParallelLabelingPass parallelLabelingpass(mlp);
     parallelLabelingpass.run();
 
     ParallelLoweringPass parallelLoweringpass(mlp);
     parallelLoweringpass.run();
-
 
     swc::pass::RenamingNodePass renamingpass(mlp);
     renamingpass.run();
@@ -139,7 +136,6 @@ int main() {
     codegen::ParallelCodegen *cg = new codegen::ParallelCodegen(mlp, config);
     string code = cg->generate();
     cout << code;
-
 
     return 0;
 }

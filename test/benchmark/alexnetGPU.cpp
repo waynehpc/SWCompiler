@@ -1,5 +1,5 @@
 /*************************************************************************
-        > File Name: test/alexnet.cpp
+        > File Name: test/alexnetGPU.cpp
         > Author: wayne
         > Mail:
         > Created Time: Mon 23 Sep 2019 01:22:47 PM UTC
@@ -13,8 +13,8 @@ using namespace swc::op;
 using namespace swc::pass;
 using namespace std;
 
-#define MINIBATCH 32
-#define PARA_DEGREE 4
+#define MINIBATCH 1024
+#define PAR_DEGREE 8
 
 int main() {
     TENSOR(data, MINIBATCH, 32, 32, 3);
@@ -226,9 +226,9 @@ int main() {
     Config config;
 
     config.train_mode = true;
-    // config.mkldnn = true;
-    config.mpi = true;
-    config.mpi_size = PARA_DEGREE;
+    config.sproc_mgpu = true;
+    config.cuda = true;
+    config.ngpus_per_rank = PAR_DEGREE;
 
     config.train_config.optimizer = "sgd";
     config.train_config.train_data_file = "mnist_labels_images.bin";
@@ -236,10 +236,10 @@ int main() {
     config.train_config.data_bytes = BytesProto::FOUR_BYTES_AS_FLOAT;
     config.train_config.train_data_samples = 60000;
     // config.train_config.snapshot = 1000;
-    config.train_config.max_iters = 100;
+    config.train_config.max_iters = 5;
     config.train_config.display = 50;
 
-    config.compute_op_annotation = true;
+    // config.compute_op_annotation = true;
     // config.comm_op_annotation = true;
 
     config.parallel_preference = COMM_SAVING;
@@ -252,27 +252,33 @@ int main() {
 
     /* about parallel strategy*/
     // config.force_data_parallel = true;
-    // config.geneticalgo_opt_parallel = true;
-    config.handcraft_parallel = true;
+    config.geneticalgo_opt_parallel = true;
+    // config.handcraft_parallel = true;
 
     // optimzer
     config.decentralized_optimizer = true;
-    config.use_ring_allreduce = true;
 
     alexnet->setConfig(config);
     std::cout << "alexnet_b" << MINIBATCH << "_p" << config.mpi_size << "\n";
 
-    svgGen(alexnet, "alexnet_infer.dot");
+    svgGen(alexnet, "alexnet_def.dot");
 
     Engine engine(alexnet);
     engine.compile();
 
-    dotGen(alexnet, "alexnet_train.dot");
-    cout << alexnet->getCommTrace() << "\n";
-    cout << alexnet->getCommCost() << "\n";
+    dotGen(alexnet, "alexnet_gputrain.dot");
 
-    string code = engine.genCode();
+    string code = engine.genCode("Graph.cpp");
     // cout << code << "\n";
 
+    config.compute_op_annotation = true;
+    engine.genCode(config, "Graph-comm.cpp");
+
+    config.comm_op_annotation = true;
+    config.compute_op_annotation = false;
+    engine.genCode(config, "Graph-comp.cpp");
+
+    cout << alexnet->getCommTrace() << "\n";
+    cout << alexnet->getCommCost() << "\n";
     return 0;
 }

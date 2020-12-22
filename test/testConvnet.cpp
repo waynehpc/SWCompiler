@@ -13,8 +13,7 @@ using namespace swc::op;
 using namespace swc::pass;
 using namespace std;
 
-int main()
-{
+int main() {
     TENSOR(data0, 8, 28, 28, 1);
 
     TENSOR(conv0_w, 16, 5, 5, 1);
@@ -46,7 +45,7 @@ int main()
 
     TENSOR(conv1_w, 16, 5, 5, 16);
     TENSOR(conv1_b, 16);
-    INIT(conv1_w, TensorInitType::XAVIER, 5*5*16); // fanIn
+    INIT(conv1_w, TensorInitType::XAVIER, 5 * 5 * 16); // fanIn
     INIT(conv1_b, TensorInitType::CONSTANT, 0);
     conv1_w->setTraining(1);
     conv1_b->setTraining(1);
@@ -82,7 +81,6 @@ int main()
     TENSOR(data7, 0);
     LINKUPPER(data7, fc0);
 
-
     Tensor *label_t = new Tensor({8}, DataType::Int32_t);
     TensorNode *label = new TensorNode("selected", label_t);
 
@@ -95,15 +93,9 @@ int main()
     LINKUPPER(loss, softmax);
 
     G(lenet);
-    GpT(lenet, data0, conv0_w, conv0_b,
-    		data1, data2,
-    		data3, conv1_w, conv1_b,
-    		data4, data5,
-    		data6, fc0_w, fc0_b,
-    		data7, label, prob, loss);
-    GpO(lenet, conv0, pool0, relu0,
-    	conv1, pool1, relu1,
-    	fc0, softmax);
+    GpT(lenet, data0, conv0_w, conv0_b, data1, data2, data3, conv1_w, conv1_b,
+        data4, data5, data6, fc0_w, fc0_b, data7, label, prob, loss);
+    GpO(lenet, conv0, pool0, relu0, conv1, pool1, relu1, fc0, softmax);
 
     lenet->initTensorNodes();
 
@@ -116,9 +108,9 @@ int main()
     // profile.batch = data0->getDims()[0];
     // IRGraph *lenet_train = getTrainNet(lenet, profile);
 
-
     TensorNode *data_input = (TensorNode *)lenet_train->getNodeByName("data0");
-    TensorNode *label_input = (TensorNode *)lenet_train->getNodeByName("selected");
+    TensorNode *label_input =
+        (TensorNode *)lenet_train->getNodeByName("selected");
     TensorNode *train_loss = (TensorNode *)lenet_train->getNodeByName("loss");
 
     lenet_train->setTrainDataNodes(label_input, data_input);
@@ -132,16 +124,19 @@ int main()
     LabelingPass labelingpass(lenet_train);
     LoweringPass loweringpass(lenet_train);
     /*
-    * puzzle:
-    * 1. Labelingpass must before loweringpass (setLowerMark)
-    * 2. ? renamingpass must before labeling,  or setNodeNameLabel, labels may duplicate
-    * 3. renamingpass after loweringpass. because lowering may take dum names. "momentum", "xx_reshape"
-    * 4. labeling pass must after loweringpass. because new op need to be labeled.
-    * -----
-    * ???
-    * break the dependency between labeling and lowering.
-    * lowering->renaming->labeling?
-    */
+     * puzzle:
+     * 1. Labelingpass must before loweringpass (setLowerMark)
+     * 2. ? renamingpass must before labeling,  or setNodeNameLabel, labels may
+     * duplicate
+     * 3. renamingpass after loweringpass. because lowering may take dum names.
+     * "momentum", "xx_reshape"
+     * 4. labeling pass must after loweringpass. because new op need to be
+     * labeled.
+     * -----
+     * ???
+     * break the dependency between labeling and lowering.
+     * lowering->renaming->labeling?
+     */
 
     passManager.add((OptimizePass *)&labelingpass);
     passManager.add((OptimizePass *)&loweringpass);
@@ -149,9 +144,7 @@ int main()
     passManager.add((OptimizePass *)&labelingpass);
     passManager.run();
 
-
     dotGen(lenet_train);
-
 
     Config config;
     config.train_mode = true;

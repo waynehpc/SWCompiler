@@ -8,8 +8,9 @@ using namespace swc::op;
 using namespace swc::pass;
 using namespace std;
 
-#define MINIBATCH 128 
-#define TIME_MS(a,b)     (1000.0*((b).tv_sec-(a).tv_sec)+0.001*((b).tv_usec-(a).tv_usec))
+#define MINIBATCH 128
+#define TIME_MS(a, b)                                                          \
+    (1000.0 * ((b).tv_sec - (a).tv_sec) + 0.001 * ((b).tv_usec - (a).tv_usec))
 
 int main() {
     //============================
@@ -55,7 +56,6 @@ int main() {
     TENSOR(tanh0, 0);
     LINKUPPER(tanh0, tanh0_o);
 
-
     TENSOR(fc1_w, 0, 10);
     fc1_w_Tensor->setTensorInit(TensorInitType::XAVIER, 512);
     fc1_w->setTraining(1);
@@ -76,13 +76,10 @@ int main() {
     TENSOR(loss, 1);
     LINKUPPER(loss, softmax_o);
 
-
     // define IR graph
     G(mlp);
-    GpT(mlp, input, fc0_w, fc0, tanh0, fc1_w, fc1,
-        label, softmax, loss);
+    GpT(mlp, input, fc0_w, fc0, tanh0, fc1_w, fc1, label, softmax, loss);
     GpO(mlp, fc0_o, tanh0_o, fc1_o, softmax_o);
-
 
     mlp->findInOut();
     mlp->updateTopology();
@@ -91,7 +88,6 @@ int main() {
 
     mlp->setTrainDataNodes(label, input);
     mlp->addDisplayTensorNodes(loss);
-
 
     Config config;
     config.train_mode = true;
@@ -106,8 +102,8 @@ int main() {
     // config.train_config.snapshot = 1000;
     config.train_config.max_iters = 100;
     config.train_config.display = 50;
-    //config.compute_op_annotation = true;
-    //config.comm_op_annotation = true;
+    // config.compute_op_annotation = true;
+    // config.comm_op_annotation = true;
     config.parallel_preference = COMM_SAVING;
     // config.parallel_preference = MEM_SAVING;
     // config.force_data_parallel = true;
@@ -115,25 +111,23 @@ int main() {
 
     mlp->setConfig(config);
 
-
     dotGen(mlp, "mlp_def.dot");
 
     Engine engine(mlp);
 
     engine.runTrainPasses();
 
-    
-    struct timeval ts,te;
+    struct timeval ts, te;
     gettimeofday(&ts, NULL);
-    for(int i=0; i<1000; i++) {
+    for (int i = 0; i < 1000; i++) {
         auto *graph = mlp->clone();
 
         PassManager passManager;
 
-        auto para_labeling = new ParallelLabelingPass(graph); 
-        auto para_lowering = new ParallelLoweringPass(graph); 
-        auto renaming  = new RenamingNodePass(graph);
-        auto eliming = new EliminationPass(graph); 
+        auto para_labeling = new ParallelLabelingPass(graph);
+        auto para_lowering = new ParallelLoweringPass(graph);
+        auto renaming = new RenamingNodePass(graph);
+        auto eliming = new EliminationPass(graph);
 
         passManager.add(para_labeling);
         passManager.add(para_lowering);

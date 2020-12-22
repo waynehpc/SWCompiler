@@ -8,8 +8,7 @@ using namespace std;
 
 #define MINIBATCH 64
 
-int main()
-{
+int main() {
 
     TENSOR(data0, MINIBATCH, 28, 28, 1);
 
@@ -42,7 +41,7 @@ int main()
 
     TENSOR(conv1_w, 16, 5, 5, 16);
     TENSOR(conv1_b, 16);
-    INIT(conv1_w, TensorInitType::XAVIER, 5*5*16); // fanIn
+    INIT(conv1_w, TensorInitType::XAVIER, 5 * 5 * 16); // fanIn
     INIT(conv1_b, TensorInitType::CONSTANT, 0);
     conv1_w->setTraining(1);
     conv1_b->setTraining(1);
@@ -78,7 +77,6 @@ int main()
     TENSOR(data7, 0);
     LINKUPPER(data7, fc0);
 
-
     Tensor *label_t = new Tensor({MINIBATCH}, DataType::Int32_t);
     TensorNode *label = new TensorNode("selected", label_t);
 
@@ -91,16 +89,9 @@ int main()
     LINKUPPER(loss, softmax);
 
     G(lenet);
-    GpT(lenet, data0, conv0_w, conv0_b,
-    		data1, data2,
-    		data3, conv1_w, conv1_b,
-    		data4, data5,
-    		data6, fc0_w, fc0_b,
-    		data7, label, prob, loss);
-    GpO(lenet, conv0, pool0, relu0,
-    	conv1, pool1, relu1,
-    	fc0, softmax);
-
+    GpT(lenet, data0, conv0_w, conv0_b, data1, data2, data3, conv1_w, conv1_b,
+        data4, data5, data6, fc0_w, fc0_b, data7, label, prob, loss);
+    GpO(lenet, conv0, pool0, relu0, conv1, pool1, relu1, fc0, softmax);
 
     lenet->findInOut();
     lenet->updateTopology();
@@ -112,22 +103,24 @@ int main()
 
     Config config;
     config.train_mode = true;
-    config.mpi = true;
-    config.mpi_size = 4;
+    // config.mpi = true;
+    // config.mpi_size = 4;
+    config.sproc_mgpu = true;
+    config.cuda = true;
+    config.ngpus_per_rank = 8;
 
     config.train_config.optimizer = "sgd";
     config.train_config.train_data_file = "mnist_labels_images.bin";
     config.train_config.label_bytes = BytesProto::ONE_BYTE_AS_INT;
     config.train_config.data_bytes = BytesProto::FOUR_BYTES_AS_FLOAT;
     config.train_config.train_data_samples = 60000;
-    config.train_config.max_iters= 1000;
+    config.train_config.max_iters = 1000;
     // config.train_config.snapshot = 1000;
     config.train_config.display = 50;
 
     // config.compute_op_annotation = true;
     // config.comm_op_annotation = true;
 
-    
     config.parallel_preference = COMM_SAVING;
     // config.parallel_preference = MEM_SAVING;
 
@@ -136,13 +129,12 @@ int main()
     /* not do lowering for node liek FC, FCGrad etc.*/
     config.enable_lowering = false;
 
-    config.force_data_parallel = true;
-    //config.geneticalgo_opt_parallel = true;
-    //config.handcraft_parallel = true;
+    // config.force_data_parallel = true;
+    // config.geneticalgo_opt_parallel = true;
+    // config.handcraft_parallel = true;
 
     // optimzer
     config.decentralized_optimizer = true;
-    
 
     lenet->setConfig(config);
 
@@ -151,11 +143,10 @@ int main()
     Engine engine(lenet);
     engine.compile();
 
-    svgGen(lenet, "lenet_train.dot");
+    svgGen(lenet, "lenet_gputrain.dot");
 
     cout << lenet->getCommTrace() << "\n";
     cout << lenet->getCommCost() << "\n";
-
 
     string code = engine.genCode();
 

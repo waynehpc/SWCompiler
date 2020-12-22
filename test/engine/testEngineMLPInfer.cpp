@@ -1,8 +1,8 @@
 /*************************************************************************
-	> File Name: test/testEngine.cpp
-	> Author: wayne
-	> Mail:  
-	> Created Time: Sat 14 Sep 2019 11:08:12 AM UTC
+        > File Name: test/testEngine.cpp
+        > Author: wayne
+        > Mail:
+        > Created Time: Sat 14 Sep 2019 11:08:12 AM UTC
  ************************************************************************/
 
 #include <iostream>
@@ -20,8 +20,7 @@ int main() {
     TENSOR(bias0, 512);
     data0_Tensor->setTensorInit(TensorInitType::FILE,
                                 "input/mnist_images_8.bin");
-    weight0_Tensor->setTensorInit(TensorInitType::FILE,
-                                  "mlp_weight0.bin");
+    weight0_Tensor->setTensorInit(TensorInitType::FILE, "mlp_weight0.bin");
     bias0_Tensor->setTensorInit(TensorInitType::FILE, "mlp_bias0.bin");
 
     OP(fc0, MatrixMatrixFCBiasOp);
@@ -37,8 +36,7 @@ int main() {
 
     TENSOR(weight1, 512, 10);
     TENSOR(bias1, 10);
-    weight1_Tensor->setTensorInit(TensorInitType::FILE,
-                                  "mlp_weight1.bin");
+    weight1_Tensor->setTensorInit(TensorInitType::FILE, "mlp_weight1.bin");
     bias1_Tensor->setTensorInit(TensorInitType::FILE, "mlp_bias1.bin");
 
     OP(fc1, MatrixMatrixFCBiasOp);
@@ -62,14 +60,15 @@ int main() {
         new TensorNode("top1", new Tensor({8, 1}, DataType::Int32_t), argmax_o);
 
     OP(accuracy_o, AccuracyOp);
-    LINKUPPER(accuracy_o, top1_t, label); 
-    auto *accuracy_t =
-        new TensorNode("accur", new Tensor({1, 2}, DataType::Int32_t), accuracy_o);
+    LINKUPPER(accuracy_o, top1_t, label);
+    auto *accuracy_t = new TensorNode(
+        "accur", new Tensor({1, 2}, DataType::Int32_t), accuracy_o);
     accuracy_t->getTensor()->setTensorInit(TensorInitType::CONSTANT, 0);
 
     // define IR graph
     G(mlp);
-    GpT(mlp, data0, weight0, bias0, data1, data2, weight1, bias1, data3, data4, label, top1_t, accuracy_t);
+    GpT(mlp, data0, weight0, bias0, data1, data2, weight1, bias1, data3, data4,
+        label, top1_t, accuracy_t);
     GpO(mlp, fc0, tanh0, fc1, softmax, argmax_o, accuracy_o);
 
     //====================================================
@@ -86,18 +85,18 @@ int main() {
     Config config;
     // config.mkldnn = true;
     config.use_dataloader = true;
-    config.dataloader_src = "mnist_labels_images_10k.bin";  
+    config.dataloader_src = "mnist_labels_images_10k.bin";
     config.label_bytes = BytesProto::ONE_BYTE_AS_INT;
     config.data_bytes = BytesProto::FOUR_BYTES_AS_FLOAT;
-    config.dataloader_samples= 10000;
+    config.dataloader_samples = 10000;
     config.display = 10000 / 8;
 
     mlp->setConfig(config);
-	
-    Engine engine(mlp); 
+
+    Engine engine(mlp);
     engine.compile();
 
-    //dotGen(mlp, "mlp_compiled.dot");
+    // dotGen(mlp, "mlp_compiled.dot");
 
     string code = engine.genCode();
     cout << code;

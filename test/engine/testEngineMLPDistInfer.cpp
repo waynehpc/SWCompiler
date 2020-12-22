@@ -1,8 +1,8 @@
 /*************************************************************************
-	> File Name: test/testEngine.cpp
-	> Author: wayne
-	> Mail:  
-	> Created Time: Sat 14 Sep 2019 11:08:12 AM UTC
+        > File Name: test/testEngine.cpp
+        > Author: wayne
+        > Mail:
+        > Created Time: Sat 14 Sep 2019 11:08:12 AM UTC
  ************************************************************************/
 
 #include <iostream>
@@ -47,7 +47,6 @@ int main() {
     TENSOR(data3, 8, 10);
     LINKUPPER(data3, fc1);
 
-
     OP(softmax, MatrixSoftmaxOp);
     LINKUPPER(softmax, data3);
 
@@ -64,7 +63,8 @@ int main() {
 
     // define IR graph
     G(mlp);
-    GpT(mlp, data0, weight0, bias0, data1, data2, weight1, bias1, data3, data4, top3_t, placeholder);
+    GpT(mlp, data0, weight0, bias0, data1, data2, weight1, bias1, data3, data4,
+        top3_t, placeholder);
     GpO(mlp, fc0, tanh0, fc1, softmax, argmax_o, print_o);
 
     //====================================================
@@ -82,8 +82,7 @@ int main() {
     // config.parallel_preference = COMM_SAVING;
     mlp->setConfig(config);
 
-	
-    Engine engine(mlp); 
+    Engine engine(mlp);
     engine.compile();
 
     dotGen(mlp, "mlp_compiled_parallel.dot");

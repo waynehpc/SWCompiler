@@ -1,5 +1,5 @@
-#include <iostream>
 #include <ctime>
+#include <iostream>
 
 #include "SWC.h"
 
@@ -8,7 +8,7 @@ using namespace swc::op;
 using namespace swc::pass;
 using namespace std;
 
-#define MINIBATCH 128 
+#define MINIBATCH 128
 
 int main() {
     //============================
@@ -54,7 +54,6 @@ int main() {
     TENSOR(tanh0, 0);
     LINKUPPER(tanh0, tanh0_o);
 
-
     TENSOR(fc1_w, 0, 10);
     fc1_w_Tensor->setTensorInit(TensorInitType::XAVIER, 512);
     fc1_w->setTraining(1);
@@ -75,13 +74,10 @@ int main() {
     TENSOR(loss, 1);
     LINKUPPER(loss, softmax_o);
 
-
     // define IR graph
     G(mlp);
-    GpT(mlp, input, fc0_w, fc0, tanh0, fc1_w, fc1,
-        label, softmax, loss);
+    GpT(mlp, input, fc0_w, fc0, tanh0, fc1_w, fc1, label, softmax, loss);
     GpO(mlp, fc0_o, tanh0_o, fc1_o, softmax_o);
-
 
     mlp->findInOut();
     mlp->updateTopology();
@@ -91,13 +87,15 @@ int main() {
     mlp->setTrainDataNodes(label, input);
     mlp->addDisplayTensorNodes(loss);
 
-
     Config config;
 
     config.train_mode = true;
     // config.mkldnn = true;
-    config.mpi = true;
-    config.mpi_size = 4;
+    // config.mpi = true;
+    // config.mpi_size = 4;
+    config.sproc_mgpu = true;
+    config.cuda = true;
+    config.ngpus_per_rank = 4;
 
     config.train_config.optimizer = "sgd";
     config.train_config.train_data_file = "mnist_labels_images.bin";
@@ -108,12 +106,12 @@ int main() {
     config.train_config.max_iters = 100;
     config.train_config.display = 50;
 
-    //config.compute_op_annotation = true;
-    //config.comm_op_annotation = true;
-    
-    config.parallel_preference = COMM_SAVING;
+    // config.compute_op_annotation = true;
+    // config.comm_op_annotation = true;
+
+    // config.parallel_preference = COMM_SAVING;
     // config.parallel_preference = MEM_SAVING;
-     
+
     /*when benchmark enabled, disable emit some code*/
     config.benchmark = true;
     /* not do lowering for node liek FC, FCGrad etc.*/
@@ -126,12 +124,12 @@ int main() {
 
     mlp->setConfig(config);
 
-    dotGen(mlp, "mlp_def.dot");
+    svgGen(mlp, "multigpu_def.dot");
 
     Engine engine(mlp);
     engine.compile();
 
-    dotGen(mlp, "mlp_train.dot");
+    svgGen(mlp, "multigpu_train.dot");
 
     cout << mlp->getCommTrace() << "\n";
     cout << mlp->getCommCost() << "\n";

@@ -92,15 +92,13 @@ int main() {
     DYOP(gather0, GatherOp, 0, 2);
     LINKUPPER(gather0, data2_p);
 
-
     TENSOR(data2, 8, 512);
     LINKUPPER(data2, gather0);
-
 
     TENSOR(weight1, 512, 10);
     TENSOR(bias1, 10);
     weight1_Tensor->setTensorInit(TensorInitType::FILE,
-                                   "input/mlp_weight1.bin");
+                                  "input/mlp_weight1.bin");
     bias1_Tensor->setTensorInit(TensorInitType::FILE, "input/mlp_bias1.bin");
 
     OP(fc1, MatrixMatrixFCBiasOp);
@@ -129,23 +127,17 @@ int main() {
 
     // define IR graph
     G(mlp);
-    GpT(mlp, data0, weight0, bias0,
-            data0_p, weight0_p, bias0_p,
-            fc0_p_mm_out,
-            data1_p, data2_p,
-            data2, data3, weight1, bias1,
-            data4, label, top3_idx);
+    GpT(mlp, data0, weight0, bias0, data0_p, weight0_p, bias0_p, fc0_p_mm_out,
+        data1_p, data2_p, data2, data3, weight1, bias1, data4, label, top3_idx);
 
-    std::vector<TensorNode*> parallel_tnodes{data0_p, weight0_p, bias0_p,
-            fc0_p_mm_out, data1_p, data2_p};
-    for(auto *tn : parallel_tnodes) {
+    std::vector<TensorNode *> parallel_tnodes{data0_p,      weight0_p, bias0_p,
+                                              fc0_p_mm_out, data1_p,   data2_p};
+    for (auto *tn : parallel_tnodes) {
         tn->getLabel()->setDeviceLabel(INT_MAX, DeviceType::CPU, 0);
     }
 
-    GpO(mlp, scatter0, scatter1, scatter2,
-            fc0_p_mm, fc0_p_add,
-            tanh0_p, gather0,
-            fc1, softmax, argmax, print_top3);
+    GpO(mlp, scatter0, scatter1, scatter2, fc0_p_mm, fc0_p_add, tanh0_p,
+        gather0, fc1, softmax, argmax, print_top3);
 
     //====================================================
     mlp->findInOut();

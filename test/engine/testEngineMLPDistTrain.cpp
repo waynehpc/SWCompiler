@@ -1,5 +1,5 @@
-#include <iostream>
 #include <ctime>
+#include <iostream>
 
 #include "SWC.h"
 
@@ -8,7 +8,7 @@ using namespace swc::op;
 using namespace swc::pass;
 using namespace std;
 
-#define MINIBATCH 128 
+#define MINIBATCH 128
 
 int main() {
     //============================
@@ -87,7 +87,6 @@ int main() {
     TENSOR(loss, 1);
     LINKUPPER(loss, softmax);
 
-
     GpT(mlp, data3, data4, weight1, bias1, label, loss);
     GpO(mlp, fc1, softmax);
 
@@ -98,7 +97,6 @@ int main() {
 
     mlp->setTrainDataNodes(label, data0);
     mlp->addDisplayTensorNodes(loss);
-
 
     Config config;
     config.train_mode = true;
@@ -119,9 +117,7 @@ int main() {
 
     mlp->setConfig(config);
 
-
     dotGen(mlp, "mlp_def.dot");
-
 
     Engine engine(mlp);
     engine.compile();

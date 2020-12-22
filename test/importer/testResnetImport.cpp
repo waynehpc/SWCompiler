@@ -50,7 +50,7 @@ int main() {
     config.mkldnn = true;
     graph->setConfig(config);
 
-    Engine engine(graph); 
+    Engine engine(graph);
     engine.compile();
 
     dotGen(graph);

@@ -84,7 +84,6 @@ int main() {
     TENSOR(loss, 1);
     LINKUPPER(loss, softmax);
 
-
     GpT(mlp, data3, data4, weight1, bias1, label, loss);
     GpO(mlp, fc1, softmax);
 
@@ -113,7 +112,8 @@ int main() {
     TRAIN(mlp, "sgd", 0.001, 0.001, 0.9, 8);
 
     TensorNode *data_input = (TensorNode *)mlp_train->getNodeByName("data0");
-    TensorNode *label_input = (TensorNode *)mlp_train->getNodeByName("selected");
+    TensorNode *label_input =
+        (TensorNode *)mlp_train->getNodeByName("selected");
     TensorNode *train_loss = (TensorNode *)mlp_train->getNodeByName("loss");
 
     mlp_train->setTrainDataNodes(label_input, data_input);
