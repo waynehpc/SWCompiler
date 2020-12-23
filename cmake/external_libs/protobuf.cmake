@@ -65,32 +65,47 @@ if(USE_SYSTEM_LIB)
       NAMES protoc
       PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
       NO_DEFAULT_PATH)
+    # message(STATUS "find_library Protobuf_PROTOC_LIBRARY
+    # ${Protobuf_PROTOC_LIBRARY}")
 
     find_library(
-      Protobuf_LIBRARY
-      NAMES protobuf
+      Protobuf_LIBRARY 
+      NAMES protobuf 
       PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
       NO_DEFAULT_PATH)
+    #message(STATUS "find_library Protobuf_LIBRARY ${Protobuf_LIBRARY}")
 
     find_path(
       Protobuf_INCLUDE_DIR google/protobuf/service.h
       PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
       NO_DEFAULT_PATH)
+    # message(STATUS "find_path Protobuf_INCLUDE_DIR ${Protobuf_INCLUDE_DIR}")
 
     find_package(Protobuf REQUIRED)
 
     # find_package(Protobuf REQUIRED )
 
     if(Protobuf_FOUND)
-      message(STATUS "Protobuf_INCLUDE_DIRS ${PROTOBUF_INCLUDE_DIRS}")
-      message(STATUS "Protobuf_LIBRARIES ${Protobuf_LIBRARIES}")
-      add_library(libprotobuf INTERFACE)
-      target_link_libraries(libprotobuf INTERFACE ${Protobuf_LIBRARIES})
-      target_include_directories(libprotobuf INTERFACE ${Protobuf_INCLUDE_DIRS})
       get_filename_component(Protobuf_ROOT ${Protobuf_INCLUDE_DIR} DIRECTORY)
       set(PROTOBUF_ROOT ${Protobuf_ROOT})
+
+      message(STATUS "System Protobuf_INCLUDE_DIRS ${Protobuf_INCLUDE_DIRS}")
+      message(STATUS "System Protobuf_LIBRARIES ${Protobuf_LIBRARIES}")
+      message(STATUS "System Protobuf_ROOT ${Protobuf_ROOT}")
+
       set(PROTOBUF_PROTOC_EXECUTABLE ${Protobuf_PROTOC_EXECUTABLE})
       set(PROTOBUF_INCLUDE_DIRS ${Protobuf_INCLUDE_DIRS})
+
+      # add_library(libprotobuf INTERFACE) target_link_libraries(libprotobuf
+      # INTERFACE ${Protobuf_LIBRARIES}) target_include_directories(libprotobuf
+      # INTERFACE ${Protobuf_INCLUDE_DIRS})
+
+      add_library(libprotobuf STATIC IMPORTED GLOBAL)
+      set_target_properties(
+        libprotobuf
+        PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${PROTOBUF_ROOT}/include
+                   IMPORTED_LOCATION ${PROTOBUF_ROOT}/lib/libprotobuf.a)
+
       return()
     endif()
   endif()

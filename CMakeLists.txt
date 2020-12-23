@@ -69,7 +69,8 @@ add_definitions(-DGOOGLE_PROTOBUF_NO_RTTI)
 include_directories(${PROTOBUF_INCLUDE_DIRS})
 
 protobuf_generate_cpp(CAFFE2_SRCS CAFFE2_HDRS src/importer/caffe2.proto)
-message(STATUS "CAFFE2_HDRS ${CAFFE2_HDRS}")
+# message(STATUS "CAFFE2_HDRS ${CAFFE2_HDRS}")
+# message(STATUS "CAFFE2_SRCS${CAFFE2_SRCS}")
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
