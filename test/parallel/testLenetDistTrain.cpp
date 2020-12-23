@@ -124,7 +124,7 @@ int main() {
     config.train_config.train_data_file = "mnist_labels_images.bin";
     config.train_config.label_bytes = BytesProto::ONE_BYTE_AS_INT;
     config.train_config.data_bytes = BytesProto::FOUR_BYTES_AS_FLOAT;
-    config.train_config.train_data_samples = 60000;
+    config.train_config.train_data_samples = 50000;
     config.train_config.snapshot = 1000;
     config.train_config.display = 500;
 

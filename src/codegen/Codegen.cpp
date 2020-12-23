@@ -936,7 +936,7 @@ void Codegen::emitDataLoaderInit() {
     TensorNode *data = graph_->getTrainDataNode();
     assert((label && data) && "Train label or data null");
     // DataLoader loader(filename, BytesProto::ONE_BYTE_AS_INT,
-    // BytesProto::FOUR_BYTES_AS_FLOAT, 1, 60000, {8u}, {8u, 28u, 28u, 1u});
+    // BytesProto::FOUR_BYTES_AS_FLOAT, 1, 50000, {8u}, {8u, 28u, 28u, 1u});
     //
     std::string var_file = UniqueName("dataloader_train_source");
     writer_ << "std::string " << var_file << " = \""

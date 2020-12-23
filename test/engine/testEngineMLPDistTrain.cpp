@@ -8,7 +8,7 @@ using namespace swc::op;
 using namespace swc::pass;
 using namespace std;
 
-#define MINIBATCH 128
+#define MINIBATCH 64
 
 int main() {
     //============================
@@ -106,10 +106,10 @@ int main() {
     config.train_config.train_data_file = "mnist_labels_images.bin";
     config.train_config.label_bytes = BytesProto::ONE_BYTE_AS_INT;
     config.train_config.data_bytes = BytesProto::FOUR_BYTES_AS_FLOAT;
-    config.train_config.train_data_samples = 60000;
+    config.train_config.train_data_samples = 50000;
     // config.train_config.snapshot = 1000;
-    config.train_config.max_iters = 100;
-    config.train_config.display = 500;
+    config.train_config.max_iters = 1000;
+    config.train_config.display = 50;
     // config.compute_op_annotation = true;
     // config.comm_op_annotation = true;
     config.parallel_preference = COMM_SAVING;

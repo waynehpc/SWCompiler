@@ -47,30 +47,39 @@ int main() {
     TENSOR(data3, 8, 10);
     LINKUPPER(data3, fc1);
 
+    Tensor *labelt = new Tensor({8}, DataType::Int32_t);
+    TensorNode *label = new TensorNode("selected", labelt);
+
     OP(softmax, MatrixSoftmaxOp);
     LINKUPPER(softmax, data3);
 
     TENSOR(data4, 8, 10);
     LINKUPPER(data4, softmax);
 
-    auto *argmax_o = new OpNode("argmax", new ArgMaxOp(3));
+    auto *argmax_o = new OpNode("argmax", new ArgMaxOp(1));
     argmax_o->exlinkUpperNode(data4);
-    auto *top3_t =
-        new TensorNode("top3", new Tensor({8, 3}, DataType::Int32_t), argmax_o);
-    auto *print_o = new OpNode("print", new DebugOp());
-    print_o->exlinkUpperNode(top3_t);
-    auto *placeholder = new TensorNode("null", {0}, print_o);
+    auto *top1_t =
+        new TensorNode("top1", new Tensor({8, 1}, DataType::Int32_t), argmax_o);
+
+    OP(accuracy_o, AccuracyOp);
+    LINKUPPER(accuracy_o, top1_t, label);
+    auto *accuracy_t = new TensorNode(
+        "accur", new Tensor({1, 2}, DataType::Int32_t), accuracy_o);
+    accuracy_t->getTensor()->setTensorInit(TensorInitType::CONSTANT, 0);
 
     // define IR graph
     G(mlp);
     GpT(mlp, data0, weight0, bias0, data1, data2, weight1, bias1, data3, data4,
-        top3_t, placeholder);
-    GpO(mlp, fc0, tanh0, fc1, softmax, argmax_o, print_o);
+        label, top1_t, accuracy_t);
+    GpO(mlp, fc0, tanh0, fc1, softmax, argmax_o, accuracy_o);
 
     //====================================================
     mlp->findInOut();
     mlp->updateTopology();
 
+    mlp->setInferDataNodes(label, data0);
+
+    mlp->addDisplayTensorNodes(accuracy_t);
     //====================================================
     dotGen(mlp, "mlp_def.dot");
 
@@ -79,13 +88,20 @@ int main() {
     config.mpi = true;
     config.mpi_size = 4;
     // config.mkldnn = true;
-    // config.parallel_preference = COMM_SAVING;
+    config.use_dataloader = true;
+    config.dataloader_src = "mnist_labels_images_10k.bin";
+    config.label_bytes = BytesProto::ONE_BYTE_AS_INT;
+    config.data_bytes = BytesProto::FOUR_BYTES_AS_FLOAT;
+    config.dataloader_samples = 10000;
+    // config.display = 10000 / 8;
+    config.display = 1;
+
     mlp->setConfig(config);
 
     Engine engine(mlp);
     engine.compile();
 
-    dotGen(mlp, "mlp_compiled_parallel.dot");
+    // dotGen(mlp, "mlp_compiled.dot");
 
     string code = engine.genCode();
     cout << code;
