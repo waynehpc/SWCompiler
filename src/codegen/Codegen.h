@@ -85,7 +85,7 @@ class Codegen {
 
     /// emit free memory codes
     virtual void emitMemFree();
-    void emitMemFree(std::string name, Device dev);
+    virtual void emitMemFree(std::string name, Device dev);
 
     /// build Tensor* -> <base, offset> map for L1 Graph
     virtual void allocateMemAddr();
@@ -223,6 +223,7 @@ class ParallelCodegen : public Codegen {
     void emitVarDeclarations() override;
     void emitMemAllocations() override;
     void emitMemFree() override;
+    void emitMemFree(std::string name, Device dev) override;
     void emitTensorAddresses() override;
     void emitTensorInitializations() override;
     void emitTensorInitialization(TensorNode *tnode);

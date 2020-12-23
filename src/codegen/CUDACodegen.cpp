@@ -239,7 +239,7 @@ void CUDACodegen::emitMemFree() {
         uint64_t size = allocator->getMemAllocated();
         if (size == 0)
             continue;
-        Codegen::emitMemFree(base, dev);
+        emitMemFree(base, dev);
     }
     /*
     //free device buffers
@@ -262,6 +262,22 @@ void CUDACodegen::emitMemFree() {
     }
 
     SWLOG_DEBUG(4) << "end CUDACodegen::emitMemFree...\n";
+}
+
+void CUDACodegen::emitMemFree(std::string name, Device dev) {
+    switch (dev.type) {
+    case DeviceType::CPU:
+        writer_ << "free(" << name << ");\n";
+        break;
+    case DeviceType::GPU:
+        writer_ << "\n";
+        writer_ << "cudaSetDevice(" << dev.id << ");\n";
+        writer_ << "cudaFree(" << name << ");\n";
+        break;
+    default:
+        SWLOG_ERROR << "Unknown DeviceType\n";
+        break;
+    }
 }
 
 void CUDACodegen::emitTensorAddresses() {

@@ -290,6 +290,11 @@ void ParallelCodegen::emitVarDeclarations() {
         writer_ << "char *" << base << ";\n";
     }
 
+    if (p_gpumem_allocator_->getMemAllocated()) {
+        std::string base = p_gpumem_allocator_->getBasePtrName();
+        writer_ << "char *" << base << ";\n";
+    }
+
     for (auto it : tensors_name_map_) {
         auto *tensor = it.first;
         std::string dtype = getTypeString(tensor);
@@ -596,9 +601,23 @@ void ParallelCodegen::masterWorkerDispatcher(OpNode *op,
             size_t count = in_tensor->size();
             std::string dtype = getTypeString(in_tensor);
 
-            writer_ << "MPI_Reduce(" << fname << ", " << tname << ", " << count
-                    << ", " << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
-                    << "MPI_SUM, " << 0 << ", MPI_COMM_WORLD);\n";
+            // writer_ << "MPI_Reduce(" << fname << ", " << tname << ", "
+            //     << count << ", " << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
+            //     << "MPI_SUM, " << 0 << ", MPI_COMM_WORLD);\n";
+
+            if (side == 0) {
+                masterWriter_ << "MPI_Reduce(" << fname << ", " << tname << ", "
+                              << count << ", "
+                              << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
+                              << "MPI_SUM, " << 0 << ", MPI_COMM_WORLD);\n";
+
+            } else {
+                workerWriter_ << "MPI_Reduce(" << fname << ", " << tname << ", "
+                              << count << ", "
+                              << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
+                              << "MPI_SUM, " << 0 << ", MPI_COMM_WORLD);\n";
+            }
+
             return;
         }
 
@@ -696,7 +715,7 @@ void ParallelCodegen::transformOpDispatcher(OpNode *node) {
 
     std::string dtype = getTypeString(in_tensor);
     size_t in_count = in_tensor->size();
-    size_t out_count = in_tensor->size();
+    size_t out_count = out_tensor->size();
 
     // std::vector<size_t>
     auto idims = in_tensor->getDims();
@@ -791,7 +810,7 @@ void ParallelCodegen::transformOpDispatcher(OpNode *node) {
         return;
     }
     if (ki == -2 && ko >= 0) {
-        writer_ << "MPI_Reduce(" << fname << ", " << fname << ", " << in_count
+        writer_ << "MPI_Reduce(" << fname << ", " << tname << ", " << in_count
                 << ", " << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
                 << "MPI_SUM, " << 0 << ", MPI_COMM_WORLD);\n";
 
@@ -812,7 +831,7 @@ void ParallelCodegen::transformOpDispatcher(OpNode *node) {
                       << sendType_num << ", " << sendType_stride << ", "
                       << DTYPE_MPI_DATATYPE_MAP.at(dtype) << ", "
                       << "&" << sendType << ");\n"
-                      << "MPI_Type_commit(&" << sendType << ";\n";
+                      << "MPI_Type_commit(&" << sendType << ");\n";
 
         masterWriter_ << "size_t " << sendOffset << " = 0;\n";
         masterWriter_ << "for(int r=1; r<" << p << "; r++) {\n";
@@ -856,6 +875,18 @@ void ParallelCodegen::transformOpDispatcher(OpNode *node) {
 
     if (ki == -1 && ko >= 0) {
         writer_ << "// memcpy, no communication cost\n";
+        return;
+    }
+
+    if (ki == -2 && ko == -1) {
+        // allreduce
+        writer_ << tname << " = " << fname << ";\n";
+        assert(dtype == "float" &&
+               "on float type is supported for RingAllReduce");
+
+        writer_ << "RingAllreduce(" << tname << ", " << out_count
+                << ", false);\n";
+
         return;
     }
 
@@ -1067,6 +1098,22 @@ void ParallelCodegen::dispatchOpNode(OpNode *op,
     }
 }
 
+void ParallelCodegen::emitMemFree(std::string name, Device dev) {
+    switch (dev.type) {
+    case DeviceType::CPU:
+        writer_ << "free(" << name << ");\n";
+        break;
+    case DeviceType::GPU:
+        writer_ << "\n";
+        writer_ << "cudaSetDevice(" << dev.id << ");\n";
+        writer_ << "cudaFree(" << name << ");\n";
+        break;
+    default:
+        SWLOG_ERROR << "Unknown DeviceType\n";
+        break;
+    }
+}
+
 void ParallelCodegen::emitMemFree() {
     SWLOG_DEBUG(4) << "begin emitMemFree...\n";
 
@@ -1079,7 +1126,7 @@ void ParallelCodegen::emitMemFree() {
         uint64_t size = allocator->getMemAllocated();
         if (dev.rank != 0 || size == 0)
             continue;
-        Codegen::emitMemFree(base, dev);
+        emitMemFree(base, dev);
     }
 
     writer_.indentDec();
@@ -1096,7 +1143,7 @@ void ParallelCodegen::emitMemFree() {
         std::string base = p_mem_alllocator_->getBasePtrName();
         // uint64_t size = p_mem_alllocator_->getMemAllocated();
 
-        Codegen::emitMemFree(base, dev);
+        emitMemFree(base, dev);
     }
     // for (auto m : mem_allocators_) {
     //     MemoryAllocator *allocator = m.get();

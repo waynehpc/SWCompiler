@@ -62,7 +62,7 @@ class CUDACodegen : public Codegen {
 
     // cudaFree in a for loop
     void emitMemFree() override;
-    void emitMemFree(std::string name, Device dev);
+    void emitMemFree(std::string name, Device dev) override;
 
     void emitEnvFinalize() override {}
 
