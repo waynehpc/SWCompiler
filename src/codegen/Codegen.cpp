@@ -1887,6 +1887,9 @@ void Codegen::emitFuncCall(OpNode *op) {
     }
 
     if ((oplabel->getTypeNameLabel()) == "BatchNormalization") {
+        // temp wayne 12.24
+        return;
+
         auto *input = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *scale = ((TensorNode *)op->getParentNode(1))->getTensor();
         auto *bias = ((TensorNode *)op->getParentNode(2))->getTensor();
@@ -1975,6 +1978,10 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << std::setprecision(12) << epsilon << ");\n";
     }
 
+    if ((oplabel->getTypeNameLabel()) == "BatchNormalization") {
+        return;
+    }
+    
     if ((oplabel->getTypeNameLabel()) == "MaxPool" ||
         (oplabel->getTypeNameLabel()) == "AveragePool") {
         auto *input = ((TensorNode *)op->getParentNode(0))->getTensor();

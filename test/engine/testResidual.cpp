@@ -1,3 +1,10 @@
+/*************************************************************************
+ *    > File Name: testResidual.cpp
+ *    > Author:  wayne
+ *    > mail:
+ *    > Created Time: Wed 23 Dec 2020 02:59:02 PM UTC
+ ************************************************************************/
+
 #include <ctime>
 #include <iostream>
 
@@ -12,27 +19,31 @@ using namespace std;
 
 int main() {
     //============================
-    // Example of 2 FC layer:
-    //  T:data0   T:weight0
-    //     \       /
-    //      \     /
-    //        O:fc0 -- T:bias0
-    //         |
-    //      T:data1
-    //         |
-    //      O:tanh0
-    //         |
-    //      T:data2
-    //                  T:weight1
-    //          \       /
-    //           \     /
-    //          O:fc1 -- T:bias1
-    //              |
-    //          T:data3
-    //              |
-    //          O: softmax
-    //              |
-    //          T:data4
+	// Example of 2 FC layer:
+	// T:data0   T:weight0
+	// 	\       /
+	// 	\     /
+	// 	O:fc0 -- T:bias0
+	// 		|
+	// 	T:data1
+	// 		|
+	// 	O:tanh0
+	// 		|
+	// 	T:data2
+	// 				T:weight1a
+	// 	/	\       /
+	// /	 \     /
+	//fc1b      O:fc1a -- T:bias1a
+	// 	\			|
+	// 	T:data3b	T:data3a
+	// 		\		/	
+	// 		 O: add
+	// 			|
+	// 			data3
+	// 			|
+	// 		O: softmax
+	// 			|
+	// 		T:data4
     //=============================
 
     TENSOR(data0, MINIBATCH, 784);
@@ -64,18 +75,43 @@ int main() {
     GpT(mlp, data0, data1, data2, weight0, bias0);
     GpO(mlp, fc0, tanh0);
 
-    TENSOR(weight1, 0, 10);
-    TENSOR(bias1, 10);
-    weight1_Tensor->setTensorInit(TensorInitType::XAVIER, 512);
-    bias1_Tensor->setTensorInit(TensorInitType::CONSTANT, 0);
-    weight1->setTraining(1);
-    bias1->setTraining(1);
+	// ----------------------------------------------------------------
+    TENSOR(weight1a, 0, 10);
+    TENSOR(bias1a, 10);
+    weight1a_Tensor->setTensorInit(TensorInitType::XAVIER, 512);
+    bias1a_Tensor->setTensorInit(TensorInitType::CONSTANT, 0);
+    weight1a->setTraining(1);
+    bias1a->setTraining(1);
 
-    OP(fc1, MatrixMatrixFCBiasOp);
-    LINKUPPER(fc1, data2, weight1, bias1);
+    OP(fc1a, MatrixMatrixFCBiasOp);
+    LINKUPPER(fc1a, data2, weight1a, bias1a);
 
-    TENSOR(data3, 0);
-    LINKUPPER(data3, fc1);
+	TENSOR(data3a, 0);
+    LINKUPPER(data3a, fc1a);
+	// ----------------------------------------------------------------
+	TENSOR(weight1b, 0, 10);
+    TENSOR(bias1b, 10);
+    weight1b_Tensor->setTensorInit(TensorInitType::XAVIER, 512);
+    bias1b_Tensor->setTensorInit(TensorInitType::CONSTANT, 0);
+    weight1b->setTraining(1);
+    bias1b->setTraining(1);
+
+    OP(fc1b, MatrixMatrixFCBiasOp);
+    LINKUPPER(fc1b, data2, weight1b, bias1b);
+
+    TENSOR(data3b, 0);
+    LINKUPPER(data3b, fc1b);
+
+	// ----------------------------------------------------------------
+	OP(add, ElementAddOp);
+    LINKUPPER(add, data3a, data3b);
+
+	TENSOR(data3, 0);
+    LINKUPPER(data3, add);
+	// ----------------------------------------------------------------
+	GpT(mlp, weight1a, bias1a, data3a, weight1b, bias1b, data3b, data3);
+    GpO(mlp, fc1a, fc1b, add);
+	// ----------------------------------------------------------------
 
     Tensor *labelt = new Tensor({MINIBATCH}, DataType::Int32_t);
     TensorNode *label = new TensorNode("selected", labelt);
@@ -87,8 +123,8 @@ int main() {
     TENSOR(loss, 1);
     LINKUPPER(loss, softmax);
 
-    GpT(mlp, data3, data4, weight1, bias1, label, loss);
-    GpO(mlp, fc1, softmax);
+    GpT(mlp, data4, label, loss);
+    GpO(mlp, softmax);
 
     mlp->findInOut();
     mlp->updateTopology();
@@ -100,8 +136,8 @@ int main() {
 
     Config config;
     config.train_mode = true;
-    config.mpi = true;
-    config.mpi_size = 4;
+    // config.mpi = true;
+    // config.mpi_size = 4;
     config.train_config.optimizer = "sgd";
     config.train_config.train_data_file = "mnist_labels_images.bin";
     config.train_config.label_bytes = BytesProto::ONE_BYTE_AS_INT;
@@ -117,12 +153,12 @@ int main() {
 
     mlp->setConfig(config);
 
-    svgGen(mlp, "mlp_def.dot");
+    svgGen(mlp, "residual_def.dot");
 
     Engine engine(mlp);
     engine.compile();
 
-    svgGen(mlp, "mlp_train.dot");
+    svgGen(mlp, "residual_train.dot");
 
     cout << mlp->getCommTrace() << "\n";
     cout << mlp->getCommCost() << "\n";
@@ -132,3 +168,4 @@ int main() {
 
     return 0;
 }
+

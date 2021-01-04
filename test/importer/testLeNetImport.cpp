@@ -46,7 +46,7 @@ int main() {
     Config config;
     // default is 0(infer); this code explicitly set it
     config.train_mode = 0;
-    config.mkldnn = true;
+    // config.mkldnn = true;
 
     graph->setConfig(config);
 

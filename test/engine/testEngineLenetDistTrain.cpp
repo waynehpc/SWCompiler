@@ -118,12 +118,12 @@ int main() {
 
     lenet->setConfig(config);
 
-    dotGen(lenet, "lenet_infer.dot");
+    svgGen(lenet, "lenet_infer.dot");
 
     Engine engine(lenet);
     engine.compile();
 
-    dotGen(lenet, "lenet_train.dot");
+    svgGen(lenet, "lenet_train.dot");
 
     cout << lenet->getCommTrace() << "\n";
     cout << lenet->getCommCost() << "\n";

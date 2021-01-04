@@ -43,9 +43,10 @@ class Label {
         _initTypeLabel = lab._initTypeLabel;
         _dev = lab._dev;
     }
-    virtual ~Label(){};
+    
+    ~Label() {}
 
-    void destroy() { this->~Label(); };
+    // void destroy() { this->~Label(); };
 
     void setNodeNameLabel(std::string s) { _nodeNameLabel = s; }
     void setTypeNameLabel(std::string s) { _typeNameLabel = s; }
