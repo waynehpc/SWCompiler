@@ -88,6 +88,7 @@ class Op {
                           std::unordered_map<IRNode *, IRNode *> &gradNodeMap) {
         SWLOG_DEBUG(100) << "OpType [" << this->getOpName()
                          << "] autoDiff() unimplemented, pass" << std::endl;
+        exit(0);
     }
 
     virtual void einsumLowering(IRGraph *graph, IRNode *node) {
@@ -103,9 +104,12 @@ class Op {
     }
     */
 
+    virtual void setAttr(int ndim) {}
+    virtual void setIONDims(std::initializer_list<int> indims, std::initializer_list<int> ondims) {}
     inline int getInputDims(int n) { return _inputNDims[n]; }
     inline int getOutputDims(int n) { return _outputNDims[n]; }
 
+    virtual void setEinReps(std::initializer_list<std::string> reps) {}
     inline int getEinOp() { return _einOp; }
 
   protected:

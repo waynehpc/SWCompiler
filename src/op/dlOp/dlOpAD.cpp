@@ -402,10 +402,16 @@ void DropoutOp::autoDiff(IRGraph *graph, IRNode *opNode,
                                  new Tensor(tensor->getTensorShape()),
                                  gradNodeMap[opNode]);
 
-        SWLOG_DEBUG(4) << "get Gradient node for " << opNode->name()
-                       << " input " << tnode->name() << "\n";
-
-        gradNodeMap[tnode] = N;
-        graph->pushTensorNode(N);
-    }
+void ElementAddOp::autoDiff(IRGraph *graph, IRNode *opNode,
+                     std::unordered_map<IRNode *, IRNode *> &gradNodeMap) {
+    SWLOG_DEBUG(4) << "autoDiff: " << _opClassName << std::endl;
+    auto *lhs = opNode->getParentNode(0);
+    auto *rhs = opNode->getParentNode(1);
+    auto *output = opNode->getChildNode(0);
+    assert(gradNodeMap.count(output) && "grad of ElementAdd output unfound\n");
+    auto *outputGrad = gradNodeMap[output];
+    
+    // TODO fix potential bug when lhs grad already exists
+    gradNodeMap[lhs] = outputGrad;
+    gradNodeMap[rhs] = outputGrad;
 }

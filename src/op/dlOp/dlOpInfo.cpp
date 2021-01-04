@@ -70,5 +70,11 @@ std::string MaxPoolOp::getOpInfo() {
     return Op::getOpInfo() + stream.str();
 }
 
+std::string ElementAddOp::getOpInfo() {
+    std::ostringstream stream;
+    stream << "IODims: " << dumpVector(_outputNDims) << "\n";
+    return Op::getOpInfo() + stream.str();
+}
+
 } // namespace op
 } // namespace swc

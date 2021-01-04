@@ -244,7 +244,44 @@ void IRGraph::initTensorNodes() {
             if (irNode->nodeType() == OP_NODE) {
                 auto *node = (OpNode *)irNode;
                 auto *op = node->getOp();
-                if (dynamic_cast<MatrixMatrixFCOp *>(op) ||
+
+                SWLOG_DEBUG(1) << "init tensornodes of op " << node->name() << " "
+                    << "parent " << node->parentNum() << " child " << node->childNum() << "\n";
+                std::cout << op->getOpInfo() << "\n";
+                std::cout << ((TensorNode*)node->getParentNode(0))->toString() << "\n";
+
+                if (dynamic_cast<ElementAddOp *>(op) ||
+                    dynamic_cast<ElementSubOp *>(op) ||
+                    dynamic_cast<ElementMulOp *>(op) || 
+                    dynamic_cast<ElementDivOp *>(op)) {
+                    auto *in = (TensorNode *)node->getParentNode(0);
+                    auto *out = (TensorNode *)node->getChildNode(0);
+                    // out->setTensor(
+                    //     new Tensor(in->getTensor()->getType()));
+                    out->setTensor(
+                        new Tensor(in->getTensor()->getType()));
+
+                    op->setAttr(in->getNDim());
+                    // switch (in->getNDim()) {
+                    //     case 1:
+                    //         op->setIONDims({1, 1}, {1});
+                    //         op->setEinReps({"a", "a", "a"});
+                    //         break;
+                    //     case 2:
+                    //         op->setIONDims({2, 2}, {2});
+                    //         op->setEinReps({"ab", "ab", "ab"});
+                    //         break;
+                    //     case 4:
+                    //         op->setIONDims({4, 4}, {4});
+                    //         op->setEinReps({"abcd", "abcd", "abcd"});
+                    //         break;
+                    //     default:
+                    //         SWLOG_ERROR << "error, unimplemented io idims\n";
+                    //         exit(0);
+                    //         break;
+                    // }
+                }
+                else if (dynamic_cast<MatrixMatrixFCOp *>(op) ||
                     dynamic_cast<MatrixMatrixFCBiasOp *>(op) ||
                     dynamic_cast<MatrixMatrixMulOp *>(op)) {
                     auto *input = (TensorNode *)node->getParentNode(0);

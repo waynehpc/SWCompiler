@@ -331,12 +331,47 @@ class MatrixAddOp : public Op {
 
 class ElementAddOp : public Op {
   public:
-    ElementAddOp() : Op(DL_OP, 2, 1, std::string("ElementAdd")) {
-        this->_inputNDims.push_back(2);
-        this->_outputNDims.push_back(2);
-    };
+    ElementAddOp() : Op(DL_OP, 2, 1, std::string("ElementAdd")) { }
     ~ElementAddOp();
     void destroy(){};
+    std::string getOpInfo() override;
+    void setAttr(int ndim) override {
+      switch (ndim) {
+        case 1:
+            this->setIONDims({1, 1}, {1});
+            this->setEinReps({"a", "a", "a"});
+            break;
+        case 2:
+            this->setIONDims({2, 2}, {2});
+            this->setEinReps({"ab", "ab", "ab"});
+            break;
+        case 4:
+            this->setIONDims({4, 4}, {4});
+            this->setEinReps({"abcd", "abcd", "abcd"});
+            break;
+        default:
+            SWLOG_ERROR << "error, unimplemented io idims\n";
+            exit(0);
+            break;
+      }
+    }
+    void setIONDims(std::initializer_list<int> indims, std::initializer_list<int> ondims) override {
+      for(auto ndim : indims) {
+        this->_inputNDims.push_back(ndim);
+      }
+      for(auto ndim : ondims) {
+        this->_outputNDims.push_back(ndim);
+      }
+    }
+    void setEinReps(std::initializer_list<std::string> reps) override {
+      this->_einOp = 1;
+      for(auto rep : reps) {
+        this->_einRep.push_back(rep);
+      }
+    }
+
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap) override;
 };
 
 class ElementSubOp : public Op {
@@ -359,9 +394,9 @@ class ElementMulOp : public Op {
         this->_einRep.push_back("bc"); // label
         this->_einRep.push_back("bc"); // origin out
         this->_einRep.push_back("bc"); // grad of input
-    };
+    }
     ~ElementMulOp();
-    void destroy(){};
+    void destroy(){}
 };
 
 class ElementDivOp : public Op {
@@ -712,6 +747,7 @@ class Conv2dWithActivationGradOp : public Op {
     ~Conv2dWithActivationGradOp();
     void destroy() {}
 };
+
 class BatchNormalizationOp : public Op {
     float epsilon_;
 
@@ -723,6 +759,22 @@ class BatchNormalizationOp : public Op {
     }
     float getEpsilon() { return epsilon_; }
     ~BatchNormalizationOp();
+    void destroy() {}
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap) override;
+};
+
+class BNGradOp : public Op {
+    float epsilon_;
+
+  public:
+    BNGradOp(float eps)
+        : Op(DL_OP, 5, 1, std::string("BNGrad")) {
+        epsilon_ = eps;
+        // TODO : dims of input
+    }
+    float getEpsilon() { return epsilon_; }
+    ~BNGradOp();
     void destroy() {}
 };
 
@@ -954,6 +1006,8 @@ class AvgPoolOp : public Op {
     std::vector<size_t> getKernels() { return kernels_; }
     std::vector<size_t> getStrides() { return strides_; }
     void destroy() {}
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap) override;
 };
 class AvgPoolGradOp : public Op {
     std::vector<size_t> kernels_;

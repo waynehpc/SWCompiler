@@ -25,14 +25,17 @@ class IRGraph;
 
 class IRNode {
   public:
-    IRNode();
+    IRNode() = default;
     IRNode(const NodeType nodeType, std::string name, IRNode *parent = nullptr)
         : _name(name), _nodeType(nodeType), _label(new Label()) {
         _topologyId = 0;
         if (parent)
             exlinkUpperNode(parent);
     }
-    ~IRNode() { printf("free:%s\n", _name.c_str()); }
+
+    ~IRNode() { 
+        delete _label;
+    }
 
     void pushParentNode(){};
     template <typename T, typename... Types>
