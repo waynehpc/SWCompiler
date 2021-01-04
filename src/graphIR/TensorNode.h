@@ -23,6 +23,7 @@ class TilingLabel;
 
 class TensorNode : public IRNode {
   public:
+    bool require_grad{true};
     TensorNode() : tensor_(NULL){};
     explicit TensorNode(std::string name, IRNode *parent = nullptr)
         : IRNode(TENSOR_NODE, name, parent) {}
@@ -44,6 +45,9 @@ class TensorNode : public IRNode {
 
     void setTensor(Tensor *tensor) { tensor_ = tensor; }
     Tensor *getTensor() { return tensor_; }
+    void reset(std::initializer_list<size_t> shape, DataType dtype = DataType::Float_t, mem_layout_t layout = layout_default) {
+      tensor_->reset(shape, dtype, layout);
+    }
 
     void setTraining(int train) { tensor_->setTraining(train); }
     int getTraining() const { return tensor_->getTraining(); }

@@ -308,14 +308,15 @@ void IRGraph::initTensorNodes() {
                     auto *out = (TensorNode *)node->getChildNode(0);
                     out->setTensor(new Tensor({idims[0], wdims[1]}));
                 }
-                if (dynamic_cast<MatrixTanhOp *>(op)) {
+                else if (dynamic_cast<MatrixTanhOp *>(op)) {
                     auto idims =
                         ((TensorNode *)node->getParentNode(0))->getDims();
                     auto *out = (TensorNode *)node->getChildNode(0);
                     out->setTensor(new Tensor({idims[0], idims[1]}));
                 }
 
-                if (dynamic_cast<ReluOp *>(op) || dynamic_cast<LRNOp *>(op)) {
+                else if(dynamic_cast<ReluOp *>(op) || dynamic_cast<LRNOp *>(op)
+                || dynamic_cast<BatchNormalizationOp *>(op)) {
 
                     auto *in = (TensorNode *)node->getParentNode(0);
                     auto *out = (TensorNode *)node->getChildNode(0);
@@ -324,7 +325,7 @@ void IRGraph::initTensorNodes() {
                     out->setTensor(
                         new Tensor(in->getTensor()->getType()));
                 }
-                if (dynamic_cast<DropoutOp *>(op)) {
+                else if(dynamic_cast<DropoutOp *>(op)) {
 
                     auto *in = (TensorNode *)node->getParentNode(0);
                     auto *mask = (TensorNode *)node->getParentNode(1);
@@ -340,28 +341,56 @@ void IRGraph::initTensorNodes() {
                         new Tensor(in->getTensor()->getType()));
                 }
 
-                if (dynamic_cast<MatrixSoftmaxOp *>(op)) {
+                else if(dynamic_cast<MatrixSoftmaxOp *>(op)) {
                     auto idims =
                         ((TensorNode *)node->getParentNode(0))->getDims();
                     auto *out = (TensorNode *)node->getChildNode(0);
                     out->setTensor(new Tensor({idims[0], idims[1]}));
                 }
 
-                if (dynamic_cast<MatrixSoftmaxWithLossOp *>(op)) {
+                else if(dynamic_cast<MatrixSoftmaxWithLossOp *>(op)) {
                     auto idims =
                         ((TensorNode *)node->getParentNode(0))->getDims();
                     auto *prob = (TensorNode *)node->getChildNode(0);
+                    auto *loss = (TensorNode *)node->getChildNode(1);
                     prob->setTensor(new Tensor({idims[0], idims[1]}));
+                    loss->setTensor(new Tensor({1}));
                 }
 
-                if (dynamic_cast<ScatterOp *>(op)) {
+                else if(dynamic_cast<ScatterOp *>(op)) {
                     // child reinit
                     auto *out = (TensorNode *)node->getChildNode(0);
                     // auto odims = out->getDims();
-                    auto *shape = out->getTensor()->getTensorShape();
-                    out->setTensor(new Tensor(shape));
+                    // auto *shape = out->getTensor()->getType();
+                    // out->setTensor(new Tensor(shape));
+                    out->setTensor(new Tensor(out->getTensor()->getType()));
                 }
-                if (auto *conv = dynamic_cast<Conv2dOp *>(op)) {
+                else if (auto *conv = dynamic_cast<Conv2dOp *>(op)) {
+                    auto idims =
+                        ((TensorNode *)node->getParentNode(0))->getDims();
+
+                    auto kernels = conv->getKernels();
+                    auto strides = conv->getStrides();
+                    auto pads = conv->getPads();
+
+                    auto *w = (TensorNode *)node->getParentNode(1);
+                    auto *b = (TensorNode *)node->getParentNode(2);
+                    auto co = w->getTensor()->getDim(0);
+                    
+                    w->reset({co, kernels[0], kernels[1], idims[3]});
+                    b->reset({co});
+                    auto wdims = ((TensorNode *)node->getParentNode(1))
+                                     ->getDims();
+
+                    std::vector<size_t> ohw = inferConvOutDims(
+                        idims[1], idims[2], kernels, strides, pads);
+
+                    auto *out = (TensorNode *)node->getChildNode(0);
+                    // out->setTensor(new Tensor({idims[0], idims[1]}));
+                    out->setTensor(
+                        new Tensor({idims[0], ohw[0], ohw[1], wdims[0]}));
+                }
+                else if (auto *conv = dynamic_cast<Conv2dWithActivationOp *>(op)) {
                     auto idims =
                         ((TensorNode *)node->getParentNode(0))->getDims();
                     auto wdims = ((TensorNode *)node->getParentNode(1))
@@ -373,27 +402,11 @@ void IRGraph::initTensorNodes() {
                         idims[1], idims[2], kernels, strides, pads);
 
                     auto *out = (TensorNode *)node->getChildNode(0);
-                    out->setTensor(new Tensor({idims[0], idims[1]}));
+                    // out->setTensor(new Tensor({idims[0], idims[1]}));
                     out->setTensor(
                         new Tensor({idims[0], ohw[0], ohw[1], wdims[0]}));
                 }
-                if (auto *conv = dynamic_cast<Conv2dWithActivationOp *>(op)) {
-                    auto idims =
-                        ((TensorNode *)node->getParentNode(0))->getDims();
-                    auto wdims = ((TensorNode *)node->getParentNode(1))
-                                     ->getDims(); // OC K K IC
-                    auto kernels = conv->getKernels();
-                    auto strides = conv->getStrides();
-                    auto pads = conv->getPads();
-                    std::vector<size_t> ohw = inferConvOutDims(
-                        idims[1], idims[2], kernels, strides, pads);
-
-                    auto *out = (TensorNode *)node->getChildNode(0);
-                    out->setTensor(new Tensor({idims[0], idims[1]}));
-                    out->setTensor(
-                        new Tensor({idims[0], ohw[0], ohw[1], wdims[0]}));
-                }
-                if (auto *pool = dynamic_cast<MaxPoolOp *>(op)) {
+                else if (auto *pool = dynamic_cast<MaxPoolOp *>(op)) {
                     auto idims =
                         ((TensorNode *)node->getParentNode(0))->getDims();
                     auto kernels = pool->getKernels();
@@ -403,10 +416,31 @@ void IRGraph::initTensorNodes() {
                         idims[1], idims[2], kernels, strides, pads);
 
                     auto *out = (TensorNode *)node->getChildNode(0);
-                    out->setTensor(new Tensor({idims[0], idims[1]}));
+                    // out->setTensor(new Tensor({idims[0], idims[1]}));
                     out->setTensor(
                         new Tensor({idims[0], ohw[0], ohw[1], idims[3]}));
                 }
+                else if (auto *pool = dynamic_cast<AvgPoolOp *>(op)) {
+                    auto idims =
+                        ((TensorNode *)node->getParentNode(0))->getDims();
+                    auto kernels = pool->getKernels();
+                    auto strides = pool->getStrides();
+                    auto pads = pool->getPads();
+                    std::vector<size_t> ohw = inferConvOutDims(
+                        idims[1], idims[2], kernels, strides, pads);
+
+                    auto *out = (TensorNode *)node->getChildNode(0);
+                    // out->setTensor(new Tensor({idims[0], idims[1]}));
+                    out->setTensor(
+                        new Tensor({idims[0], ohw[0], ohw[1], idims[3]}));
+                }
+
+                else {
+                    SWLOG_ERROR << "unsupported Op in initTensorNodes\n";
+                    exit(0);
+                }
+
+                // std::cout << ((TensorNode*)node->getChildNode(0))->toString() << "\n";
             }
         }
     }
@@ -559,6 +593,8 @@ void IRGraph::copyTo(IRGraph *graph) const {
         }
     }
 
+    // graph->setConfig(_config);
+
     graph->setDeviceLabel(_dev);
     graph->findInOut();
     graph->updateTopology();
@@ -686,16 +722,16 @@ size_t IRGraph::getCommCost() {
     for (auto opnode : _ops) {
         // split these comm ops, because code may be different
         // in the future
-        if (dynamic_cast<ScatterOp *>(opnode->getOp())) {
+        if(dynamic_cast<ScatterOp *>(opnode->getOp())) {
             cost += opnode->getCost(_config);
         }
-        if (dynamic_cast<GatherOp *>(opnode->getOp())) {
+        else if(dynamic_cast<GatherOp *>(opnode->getOp())) {
             cost += opnode->getCost(_config);
         }
-        if (dynamic_cast<ReduceOp *>(opnode->getOp())) {
+        else if(dynamic_cast<ReduceOp *>(opnode->getOp())) {
             cost += opnode->getCost(_config);
         }
-        if (dynamic_cast<TransformOp *>(opnode->getOp())) {
+        else if(dynamic_cast<TransformOp *>(opnode->getOp())) {
             cost += opnode->getCost(_config);
         }
     }

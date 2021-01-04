@@ -43,10 +43,11 @@ typedef struct
  */
 class AutodiffPass {
   private:
+    // to be depreciated
     int _method;
+    // to be depreciated
     void* _parameters;
     IRGraph *_graph;
-
 
   public:
     AutodiffPass(IRGraph *graph){ _graph = graph; };

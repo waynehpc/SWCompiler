@@ -24,11 +24,13 @@ namespace swc {
 
 void TensorNode::destroy() {
     // printf("free TensorNode:%s\n", name().c_str());
-    getLabel()->destroy();
+    // getLabel()->destroy();
     getTensor()->destroy();
-    _tilingLabel = nullptr;
+    // _tilingLabel = nullptr;
+    if(_tilingLabel)
+        delete _tilingLabel;
     SWLOG_DEBUG(4) << "Destroy TensorNode: " << name() << "\n";
-};
+}
 
 /// share tensor, that tensor_ point to
 TensorNode *TensorNode::clone() const {
@@ -46,7 +48,6 @@ TensorNode *TensorNode::clone() const {
 // but point to the same tenorshape
 TensorNode *TensorNode::deepClone() const {
     TensorNode *tn = new TensorNode(name());
-    // tn->setTensor(new Tensor(tensor_->getTensorShape()));
     Tensor *tensor = tensor_->clone();
     tn->setTensor(tensor);
     tn->setLabel(getLabel()); // mainly for training flag
@@ -68,7 +69,7 @@ std::string TensorNode::toString() const {
 void TensorNode::autoDiff(IRGraph *graph,
                           std::unordered_map<IRNode *, IRNode *> &gradNodeMap,
                           void *methodParams, pass::METHOD_TYPE methodType) {
-    SWLOG_DEBUG(4) << "TensorNode: " << name() << " begin to autodiff"
+    SWLOG_DEBUG(2) << "TensorNode: " << name() << " begin to autodiff"
                    << std::endl;
 
     if (gradNodeMap.count(this)) {
@@ -84,7 +85,7 @@ void TensorNode::autoDiff(IRGraph *graph,
 
         if (methodType == SGD_METHOD) {
             SWLOG_DEBUG(4) << "SGD generate..." << std::endl;
-            auto *mom_t = new Tensor(this->getTensor()->getTensorShape());
+            auto *mom_t = new Tensor(this->getTensor()->getType());
             mom_t->setTensorInit(TensorInitType::CONSTANT, 0);
             auto *momentum = new TensorNode("momentum", mom_t);
 
@@ -119,12 +120,12 @@ void TensorNode::autoDiff(IRGraph *graph,
 
     // End point tensor
     if (childNum() == 0) {
-        SWLOG_DEBUG(4) << "End point tensor" << std::endl;
+        SWLOG_DEBUG(4) << name() << " is a leaf tensor" << std::endl;
 
         // generate new tensors
         auto *tensor = getTensor();
         auto *N = new TensorNode(name() + "_grad",
-                                 new Tensor(tensor->getTensorShape()));
+                                 new Tensor(tensor->getType()));
         tensor->setTensorInit(TensorInitType::CONSTANT, 0);
 
         // update information

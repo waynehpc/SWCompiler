@@ -9,7 +9,6 @@
 #define OPNODE_H_
 
 #include "IRNode.h"
-
 #include "op/Op.h"
 #include <sstream>
 
@@ -23,9 +22,16 @@ class StrategyLabel;
 class OpNode : public IRNode {
   public:
     OpNode() : op_(NULL){};
-    explicit OpNode(std::string name) : IRNode(OP_NODE, name){};
+    explicit OpNode(std::string name) : IRNode(OP_NODE, name){}
     explicit OpNode(std::string name, Op *op)
-        : IRNode(OP_NODE, name), op_(op){};
+        : IRNode(OP_NODE, name), op_(op){}
+
+    explicit OpNode(std::string name, Op *op, std::initializer_list<IRNode *> parents)
+        : IRNode(OP_NODE, name), op_(op) { 
+            for(auto &it : parents)
+                this->exlinkUpperNode(it);
+        }
+    
     ~OpNode(){};
 
     void destroy();
@@ -51,9 +57,12 @@ class OpNode : public IRNode {
                   std::unordered_map<IRNode *, IRNode *> &gradNodeMap) {
         SWLOG_DEBUG(4) << "OpNode " << name() << " begin to autodiff"
                        << std::endl;
-        Op *_op = op_;
-        _op->autoDiff(graph, this, gradNodeMap);
-    };
+        setUpOpGradNode(graph, gradNodeMap);
+        setUpInputGradNode(graph, gradNodeMap);
+    }
+
+    void setUpOpGradNode(IRGraph *graph, std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
+    void setUpInputGradNode(IRGraph *graph, std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
 
     void checkValid() {
         Op *_op = op_;

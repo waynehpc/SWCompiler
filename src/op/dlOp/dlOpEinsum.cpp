@@ -33,7 +33,7 @@ namespace op {
  * *********************************************************/
 
 void MatrixMatrixFCOp::einsumLowering(IRGraph *graph, IRNode *node) {
-    SWLOG_DEBUG(4) << "einsumLowering MatrixMatrixFCOp ..." << std::endl;
+    SWLOG_DEBUG(10) << "einsumLowering MatrixMatrixFCOp ..." << std::endl;
 
     // Op check;
     assert(node->parentNum() == 2 && "FC input should be 2: data, weight");
@@ -76,7 +76,7 @@ void MatrixMatrixFCOp::einsumLowering(IRGraph *graph, IRNode *node) {
 
 void MatrixMatrixFCGradOp::einsumLowering(IRGraph *graph, IRNode *node) {
 
-    SWLOG_DEBUG(4) << "einsumLowering MatrixMatrixFCGradOp ..." << std::endl;
+    SWLOG_DEBUG(10) << "einsumLowering MatrixMatrixFCGradOp ..." << std::endl;
 
     // Op check;
     assert(node->parentNum() == 3 &&
@@ -107,7 +107,7 @@ void MatrixMatrixFCGradOp::einsumLowering(IRGraph *graph, IRNode *node) {
     COP(op_w_t, "op_" + weight->name() + "_T", MatrixTransposeOp, weight);
 
     CTENSOR(w_trans, weight->name() + "_T",
-            weight->getTensor()->getShuffledTensorShape({1, 0}), op_w_t);
+            weight->getTensor()->getShuffledTensorType({1, 0}), op_w_t);
 
     COP(dx, node->name() + "_dx_mm", MatrixMatrixMulOp, outputG, w_trans);
 
@@ -120,7 +120,7 @@ void MatrixMatrixFCGradOp::einsumLowering(IRGraph *graph, IRNode *node) {
     COP(op_x_t, "op_" + input->name() + "_T", MatrixTransposeOp, input);
 
     CTENSOR(x_trans, input->name() + "_T",
-            input->getTensor()->getShuffledTensorShape({1, 0}), op_x_t);
+            input->getTensor()->getShuffledTensorType({1, 0}), op_x_t);
 
     // 19.10.1 naive, incomplete implementation for find the batch dim
     if (input->getTensor()->getMemLayoutTag() == "nc")
@@ -144,7 +144,7 @@ void MatrixMatrixFCGradOp::einsumLowering(IRGraph *graph, IRNode *node) {
 }
 
 void MatrixMatrixFCBiasOp::einsumLowering(IRGraph *graph, IRNode *node) {
-    SWLOG_DEBUG(4) << "einsumLowering MatrixMatrixFCBiasOp ..." << std::endl;
+    SWLOG_DEBUG(10) << "einsumLowering MatrixMatrixFCBiasOp ..." << std::endl;
 
     SWLOG_DEBUG(4) << node->name() << " lowering\n";
     // Op check;
@@ -229,7 +229,7 @@ void MatrixMatrixFCBiasOp::einsumLowering(IRGraph *graph, IRNode *node) {
 }
 
 void MatrixMatrixFCBiasGradOp::einsumLowering(IRGraph *graph, IRNode *node) {
-    // SWLOG_DEBUG(4) << "einsumLowering MatrixMatrixFCBiasGradOp ..." <<
+    SWLOG_DEBUG(10) << "einsumLowering MatrixMatrixFCBiasGradOp ..." << std::endl;
     // std::endl; for (int i = 0; i < node->parentNum(); i++) {
     //     std::cout << node->getParentNode(i)->name() << std::endl;
     // }
@@ -256,7 +256,7 @@ void MatrixMatrixFCBiasGradOp::einsumLowering(IRGraph *graph, IRNode *node) {
     COP(op_w_t, "op_" + weight->name() + "_T", MatrixTransposeOp, weight);
 
     Tensor *wt =
-        new Tensor(weight->getTensor()->getShuffledTensorShape({1, 0}));
+        new Tensor(weight->getTensor()->getShuffledTensorType({1, 0}));
     auto w_trans = new TensorNode(weight->name() + "_T", wt, op_w_t);
 
     auto dx = new OpNode(node->name() + "_dx_mm", new MatrixMatrixMulOp());
@@ -289,7 +289,7 @@ void MatrixMatrixFCBiasGradOp::einsumLowering(IRGraph *graph, IRNode *node) {
     // dw = XT*dy
     auto op_x_t = new OpNode("op_" + X->name() + "_T", new MatrixTransposeOp());
     op_x_t->exlinkUpperNode(X);
-    Tensor *xt = new Tensor(X->getTensor()->getShuffledTensorShape({1, 0}));
+    Tensor *xt = new Tensor(X->getTensor()->getShuffledTensorType({1, 0}));
     auto x_trans = new TensorNode(X->name() + "_T", xt, op_x_t);
 
     // 19.10.1 naive, incomplete implementation for find the batch dim
