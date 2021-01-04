@@ -49,6 +49,40 @@ TensorShape* TensorShape::getTiledShape(int index, int n) {
     return result;
 }
 
+TensorType TensorType::getTiledTensorType( int idx, int n) { 
+    int ndim = numDims_;
+    assert((int)idx < ndim && "illegal tiled dim.");
+
+
+    std::vector<size_t> dims;
+    for (int i=0; i< ndim; i++) {
+        if(i == idx) {
+            dims.push_back(shape_[i] / n);
+        } else {
+            dims.push_back(shape_[i]);
+        }
+    }
+
+    TensorType t(dims, dtype_, layout_);
+    return t;
+}
+
+
+size_t TensorType::getSizeInBytes() const {
+    switch (dtype_) {
+    case DataType::Float_t:
+        return size() * sizeof(float);
+    case DataType::Double_t:
+        return size() * sizeof(double);
+    case DataType::Int8_t:
+        return size() * sizeof(int8_t);
+    case DataType::Int32_t:
+        return size() * sizeof(int32_t);
+    default:
+        SWLOG_ERROR << "UNKNOWN DataType\n";
+        return size() * sizeof(float);
+    }
+}
 
 Tensor *Tensor::clone() const {
     Tensor *t = new Tensor(shape_, dataType_);
@@ -90,21 +124,21 @@ void Tensor::setTensorInit(TensorInitType type, TensorInitInfo info) {
     initInfo_ = info;
 }
 
-size_t Tensor::getSizeInBytes() const {
-    switch (dataType_) {
-    case DataType::Float_t:
-        return shape_->size() * sizeof(float);
-    case DataType::Double_t:
-        return shape_->size() * sizeof(double);
-    case DataType::Int8_t:
-        return shape_->size() * sizeof(int8_t);
-    case DataType::Int32_t:
-        return shape_->size() * sizeof(int32_t);
-    default:
-        SWLOG_ERROR << "UNKNOWN DataType\n";
-        return shape_->size() * sizeof(float);
-    }
-}
+// size_t Tensor::getSizeInBytes() const {
+//     switch (dataType_) {
+//     case DataType::Float_t:
+//         return shape_->size() * sizeof(float);
+//     case DataType::Double_t:
+//         return shape_->size() * sizeof(double);
+//     case DataType::Int8_t:
+//         return shape_->size() * sizeof(int8_t);
+//     case DataType::Int32_t:
+//         return shape_->size() * sizeof(int32_t);
+//     default:
+//         SWLOG_ERROR << "UNKNOWN DataType\n";
+//         return shape_->size() * sizeof(float);
+//     }
+// }
 
 TensorShape *
 Tensor::getShuffledTensorShape(const std::vector<size_t> &shuffle) const {
@@ -120,11 +154,26 @@ std::vector<size_t>
     Tensor::getShuffledDims(const std::vector<size_t> &shuffle) const {
     std::vector<size_t> dims;
     for (auto idx : shuffle) {
-        if ((int)idx < shape_->getNDim())
-            dims.push_back(shape_->getDim(idx));
+        if ((int)idx < getNDim())
+            dims.push_back(getDim(idx));
     }
     return dims;
 }
+
+TensorType
+Tensor::getShuffledTensorType(const std::vector<size_t> &shuffle) const {
+    assert((int)shuffle.size() == getNDim() && "illegal shuffle.");
+
+    std::vector<size_t> dims;
+    for (auto idx : shuffle) {
+        if ((int)idx < getNDim())
+            dims.push_back(getDim(idx));
+    }
+
+    TensorType t(dims, getDataType(), getMemLayout());
+    return t;
+}
+
 std::pair<size_t, size_t> Tensor::viewAs2D(int n) {
     assert(n>=1 && n<=getNDim() && "illegal n");
     size_t dim0 = getDim(0);
@@ -137,10 +186,11 @@ std::pair<size_t, size_t> Tensor::viewAs2D(int n) {
     return {dim0, dim1};
 }
 
-std::string Tensor::getMemLayoutTag() const{
+std::string TensorType::getMemLayoutTag() const{
 
-    int ndim = getNDim();
-    switch(mem_layout_){
+    int ndim = numDims_;
+
+    switch(layout_){
     case layout_default:
         if(ndim == 1)
             return "x"; 
@@ -164,6 +214,7 @@ std::string Tensor::getMemLayoutTag() const{
     }
     return "any"; 
 }
+
 /*
 
 template<>

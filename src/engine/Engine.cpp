@@ -194,7 +194,7 @@ void Engine::transformForMKLDNN() {
                 LINKUPPER(trans_op, src);
 
                 Tensor *trans_out_t = new Tensor(
-                    src->getTensor()->getShuffledTensorShape(NHWC2NCHW),
+                    src->getTensor()->getShuffledDims(NHWC2NCHW),
                     src->getDataType(), layout_nchw);
                 std::string trans_out_name = src->name() + "_t";
                 auto trans_out =
@@ -215,7 +215,7 @@ void Engine::transformForMKLDNN() {
             DESTROYUPPER(dst, node);
             // create new conv out
             Tensor *conv_out_t =
-                new Tensor(dst->getTensor()->getShuffledTensorShape(NHWC2NCHW),
+                new Tensor(dst->getTensor()->getShuffledDims(NHWC2NCHW),
                            dst->getDataType(), layout_nchw);
             std::string conv_out_name = dst->name() + "_nchw";
             // add conv_out as node's child
@@ -251,7 +251,7 @@ void Engine::transformForMKLDNN() {
             LINKUPPER(trans_op, weight);
 
             Tensor *trans_out_t = new
-            Tensor(weight->getTensor()->getShuffledTensorShape(NHWC2NCHW),
+            Tensor(weight->getTensor()->getShuffledDims(NHWC2NCHW),
             weight->getDataType(), layout_nchw); std::string trans_out_name =
             weight->name() + "_t"; auto trans_out = new
             TensorNode(trans_out_name, trans_out_t, trans_op);
@@ -270,7 +270,7 @@ void Engine::transformForMKLDNN() {
             DESTROYUPPER(dst, node);
             // create new conv out
             Tensor *conv_out_t = new
-            Tensor(dst->getTensor()->getShuffledTensorShape(NHWC2NCHW),
+            Tensor(dst->getTensor()->getShuffledDims(NHWC2NCHW),
             dst->getDataType(), layout_nchw); std::string conv_out_name =
             dst->name() + "_nchw";
             // add conv_out as node's child
@@ -314,7 +314,7 @@ void Engine::transformForMKLDNN() {
             LINKUPPER(trans_op, weight);
 
             Tensor *trans_out_t =
-                new Tensor(weight->getTensor()->getShuffledTensorShape({1, 0}),
+                new Tensor(weight->getTensor()->getShuffledDims({1, 0}),
                            weight->getDataType(), layout_nc);
             std::string trans_out_name = weight->name() + "_t";
             auto trans_out =
@@ -351,7 +351,7 @@ void Engine::transformForMKLDNN() {
             LINKUPPER(trans_op, src);
 
             Tensor *trans_out_t =
-                new Tensor(src->getTensor()->getShuffledTensorShape(NHWC2NCHW),
+                new Tensor(src->getTensor()->getShuffledDims(NHWC2NCHW),
                            src->getDataType(), layout_nchw);
             std::string trans_out_name = src->name() + "_t";
             auto trans_out =
@@ -370,7 +370,7 @@ void Engine::transformForMKLDNN() {
             DESTROYUPPER(dst, node);
             // create new conv out
             Tensor *conv_out_t =
-                new Tensor(dst->getTensor()->getShuffledTensorShape(NHWC2NCHW),
+                new Tensor(dst->getTensor()->getShuffledDims(NHWC2NCHW),
                            dst->getDataType(), layout_nchw);
             std::string conv_out_name = dst->name() + "_nchw";
             // add conv_out as node's child
@@ -408,7 +408,7 @@ void Engine::transformForMKLDNN() {
                 LINKUPPER(trans_op, src);
 
                 Tensor *trans_out_t = new Tensor(
-                    src->getTensor()->getShuffledTensorShape(NHWC2NCHW),
+                    src->getTensor()->getShuffledDims(NHWC2NCHW),
                     src->getDataType(), layout_nchw);
                 std::string trans_out_name = src->name() + "_t";
                 auto trans_out =
@@ -429,7 +429,7 @@ void Engine::transformForMKLDNN() {
             DESTROYUPPER(dst, node);
             // create new conv out
             Tensor *conv_out_t =
-                new Tensor(dst->getTensor()->getShuffledTensorShape(NHWC2NCHW),
+                new Tensor(dst->getTensor()->getShuffledDims(NHWC2NCHW),
                            dst->getDataType(), layout_nchw);
             std::string conv_out_name = dst->name() + "_nchw";
             // add conv_out as node's child

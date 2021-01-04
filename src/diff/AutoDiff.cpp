@@ -59,7 +59,7 @@ IRGraph *getTrainNet(IRGraph *graph, TrainingConfig &config) {
 
                 auto *node_mirror = node->clone();
 
-                auto *mom_t = new Tensor(node->getTensor()->getTensorShape());
+                auto *mom_t = new Tensor(node->getTensor()->getType());
                 mom_t->setTensorInit(TensorInitType::CONSTANT, 0);
                 auto *momentum = new TensorNode("momentum", mom_t);
 
@@ -88,7 +88,7 @@ IRGraph *getTrainNet(IRGraph *graph, TrainingConfig &config) {
 
                 auto *tensor = ((TensorNode *)node)->getTensor();
                 auto *N = new TensorNode(node->name() + "_grad",
-                                         new Tensor(tensor->getTensorShape()));
+                                         new Tensor(tensor->getType()));
                 // tensor->setTensorInit(TensorInitType::CONSTANT, 0);
 
                 gradNodeMap[node] = N;
@@ -166,7 +166,7 @@ IRGraph *getTrainNet(IRGraph *graph, TrainingConfig &config) {
                 auto *tnode = (TensorNode *)(node->getParentNode(i));
                 auto *tensor = tnode->getTensor();
                 auto *N = new TensorNode(tnode->name() + "_grad",
-                                         new Tensor(tensor->getTensorShape()),
+                                         new Tensor(tensor->getType()),
                                          gradNodeMap[node]);
 
                 SWLOG_DEBUG(2) << "get Gradient node for " << node->name()

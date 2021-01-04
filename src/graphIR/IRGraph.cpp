@@ -58,15 +58,15 @@ bool IRGraph::buildSubGraphs(TensorNode *in, TensorNode *out,
 
     auto subInDims = inDims;
     subInDims[axis] = dimPerSub;
-    std::vector<size_t> *shape = new std::vector<size_t>();
+    std::vector<size_t> shape;
     for (auto dim : subInDims)
-        shape->push_back(dim);
+        shape.push_back(dim);
 
     IRGraph *subG = ((SubGraphOp *)subGNode->getOp())->getGraph();
     auto *inNodeOfSubG = (TensorNode *)subG->getNodeByName(in->name() + "_sub");
     if (!inNodeOfSubG)
         return false;
-    inNodeOfSubG->setTensor(new Tensor(new TensorShape(shape)));
+    inNodeOfSubG->setTensor(new Tensor(shape));
     subG->initTensorNodes();
 
     for (int i = 1; i < num; i++) {
@@ -78,7 +78,7 @@ bool IRGraph::buildSubGraphs(TensorNode *in, TensorNode *out,
         if (!inNodeOfSubG)
             return false;
 
-        inNodeOfSubG->setTensor(new Tensor(new TensorShape(shape)));
+        inNodeOfSubG->setTensor(new Tensor(shape));
         subG_cp->initTensorNodes();
 
         auto *subG_Op = new SubGraphOp();
@@ -147,7 +147,7 @@ OpNode *IRGraph::extractSubGraph(TensorNode *in, TensorNode *out) {
 
                 TensorNode *node_sub = new TensorNode(
                     node->name() + "_sub",
-                    new Tensor(node->getTensor()->getTensorShape()), scatter);
+                    new Tensor(node->getTensor()->getType()), scatter);
                 node->replaceUseKeepOrder(node_sub);
 
                 subG->pushTensorNode(node_mirror, node_sub);
@@ -161,7 +161,7 @@ OpNode *IRGraph::extractSubGraph(TensorNode *in, TensorNode *out) {
 
                 TensorNode *node_sub = new TensorNode(
                     node->name() + "_sub",
-                    new Tensor(node->getTensor()->getTensorShape()));
+                    new Tensor(node->getTensor()->getType()));
                 node_sub->exlinkUpperNode(node->getParentNode(0));
 
                 TensorNode *node_mirror = node->clone();
@@ -186,7 +186,7 @@ OpNode *IRGraph::extractSubGraph(TensorNode *in, TensorNode *out) {
 
                 TensorNode *node_sub = new TensorNode(
                     node->name() + "_sub",
-                    new Tensor(node->getTensor()->getTensorShape()), scatter);
+                    new Tensor(node->getTensor()->getType()), scatter);
                 node->replaceUseKeepOrder(node_sub);
 
                 subG->pushTensorNode(node_mirror, node_sub);
@@ -260,14 +260,13 @@ void IRGraph::initTensorNodes() {
                     // weight->setTensor(new Tensor({idims[1], wdims[1]}));
 
                     auto dim2 = input->getTensor()->viewAs2D(1);
-                    SWLOG_DEBUG(6)
+                    SWLOG_DEBUG(2)
                         << input->name() << " ndims = " << idims.size()
                         << ", view as 2d " << dim2.first << " * " << dim2.second
                         << " to fit MatrixMatrixMulOp\n";
-                    SWLOG_DEBUG(6) << node->name() << ", reset weight dim to "
+                    SWLOG_DEBUG(2) << node->name() << ", reset weight dim to "
                                    << dim2.second << ", " << wdims[1] << "\n";
-                    weight->getTensor()->reset(
-                        new TensorShape({dim2.second, wdims[1]}));
+                    weight->getTensor()->reset({dim2.second, wdims[1]});
 
                     auto *out = (TensorNode *)node->getChildNode(0);
                     out->setTensor(new Tensor({idims[0], wdims[1]}));
@@ -283,8 +282,10 @@ void IRGraph::initTensorNodes() {
 
                     auto *in = (TensorNode *)node->getParentNode(0);
                     auto *out = (TensorNode *)node->getChildNode(0);
+                    // out->setTensor(
+                    //     new Tensor(in->getTensor()->getType()));
                     out->setTensor(
-                        new Tensor(in->getTensor()->getTensorShape()));
+                        new Tensor(in->getTensor()->getType()));
                 }
                 if (dynamic_cast<DropoutOp *>(op)) {
 
@@ -292,10 +293,14 @@ void IRGraph::initTensorNodes() {
                     auto *mask = (TensorNode *)node->getParentNode(1);
                     auto *out = (TensorNode *)node->getChildNode(0);
 
+                    // mask->setTensor(
+                    //     new Tensor(in->getTensor()->getType()));
+                    // out->setTensor(
+                    //     new Tensor(in->getTensor()->getType()));
                     mask->setTensor(
-                        new Tensor(in->getTensor()->getTensorShape()));
+                        new Tensor(in->getTensor()->getType()));
                     out->setTensor(
-                        new Tensor(in->getTensor()->getTensorShape()));
+                        new Tensor(in->getTensor()->getType()));
                 }
 
                 if (dynamic_cast<MatrixSoftmaxOp *>(op)) {

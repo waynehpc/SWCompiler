@@ -91,7 +91,7 @@ static std::vector<size_t> inferConvOutDims(size_t ih, size_t iw,
     return {oh, ow};
 }
 
-// replaced by Tensor::getShuffledTensorShape(...)
+// replaced by Tensor::getShuffledTensorXXShape(...)
 // static std::vector<size_t> inferTransOutDims(std::vector<size_t> &idims,
 //                                              std::vector<size_t> &shuffle) {
 //     // TODO check illegal shuffle index
@@ -224,7 +224,7 @@ void Caffe2Importer::loadOp(const caffe2::OperatorDef &op) {
         LINKUPPER(trans, weight);
 
         Tensor *wt =
-            new Tensor(weight->getTensor()->getShuffledTensorShape(NCHW2NHWC), weight->getDataType(), layout_nhwc);
+            new Tensor(weight->getTensor()->getShuffledDims(NCHW2NHWC), weight->getDataType(), layout_nhwc);
         std::string trans_name = weight->name() + "_T";
         auto w_trans = new TensorNode(trans_name, wt, trans);
 
@@ -271,8 +271,8 @@ void Caffe2Importer::loadOp(const caffe2::OperatorDef &op) {
         opNode->exlinkUpperNode(data, scale, bias, mean, var);
 
         std::string res_name = op.output(0);
-        auto *tshape = data->getTensor()->getTensorShape();
-        auto *out_tnode = new TensorNode(res_name, new Tensor(tshape), opNode);
+        // auto *tshape = data->getTensor()->getTensorXXShape();
+        auto *out_tnode = new TensorNode(res_name, new Tensor(data->getTensor()->getType()), opNode);
         name_tNode_map_[res_name] = out_tnode;
         graph_->pushTensorNode(out_tnode);
     }
@@ -290,8 +290,8 @@ void Caffe2Importer::loadOp(const caffe2::OperatorDef &op) {
             auto *tensor = name_tNode_map_[res_name]->getTensor();
             out_tnode = new TensorNode(res_name, tensor, opNode);
         } else {
-            auto *tshape = in->getTensor()->getTensorShape();
-            out_tnode = new TensorNode(res_name, new Tensor(tshape), opNode);
+            // auto *tshape = in->getTensor()->getTensorXXShape();
+            out_tnode = new TensorNode(res_name, new Tensor(in->getTensor()->getType()), opNode);
         }
         // name mapping to newest operator's  res TensorNode
         name_tNode_map_[res_name] = out_tnode;
@@ -310,8 +310,8 @@ void Caffe2Importer::loadOp(const caffe2::OperatorDef &op) {
             auto *tensor = name_tNode_map_[res_name]->getTensor();
             out_tnode = new TensorNode(res_name, tensor, opNode);
         } else {
-            auto *tshape = lhs->getTensor()->getTensorShape();
-            out_tnode = new TensorNode(res_name, new Tensor(tshape), opNode);
+            // auto *tshape = lhs->getTensor()->getTensorXXShape();
+            out_tnode = new TensorNode(res_name, new Tensor(lhs->getTensor()->getType()), opNode);
         }
         // name mapping to newest operator's  res TensorNode
         name_tNode_map_[res_name] = out_tnode;
@@ -383,7 +383,7 @@ void Caffe2Importer::loadOp(const caffe2::OperatorDef &op) {
         LINKUPPER(trans, weight);
 
         Tensor *wt =
-            new Tensor(weight->getTensor()->getShuffledTensorShape({1, 0}));
+            new Tensor(weight->getTensor()->getShuffledDims({1, 0}));
         std::string trans_name = weight->name() + "_T";
         auto w_trans = new TensorNode(trans_name, wt, trans);
 
@@ -397,7 +397,7 @@ void Caffe2Importer::loadOp(const caffe2::OperatorDef &op) {
             LINKUPPER(trans_in, in);
 
             Tensor *inT =
-                new Tensor(in->getTensor()->getShuffledTensorShape(NHWC2NCHW), weight->getDataType(), layout_nhwc);
+                new Tensor(in->getTensor()->getShuffledDims(NHWC2NCHW), weight->getDataType(), layout_nhwc);
             std::string trans_in_name = in->name() + "_T";
             auto in_trans = new TensorNode(trans_in_name, inT, trans_in);
             opNode->exlinkUpperNode(in_trans, w_trans, bias);
@@ -437,8 +437,8 @@ void Caffe2Importer::loadOp(const caffe2::OperatorDef &op) {
         LINKUPPER(opNode, in);
 
         std::string res_name = op.output(0);
-        auto *tshape = in->getTensor()->getTensorShape();
-        auto *out_tnode = new TensorNode(res_name, new Tensor(tshape), opNode);
+        // auto *tshape = in->getTensor()->getTensorXXShape();
+        auto *out_tnode = new TensorNode(res_name, new Tensor(in->getTensor()->getType()), opNode);
         name_tNode_map_[res_name] = out_tnode;
         graph_->pushTensorNode(out_tnode);
     }
@@ -452,15 +452,14 @@ void Caffe2Importer::loadOp(const caffe2::OperatorDef &op) {
             ratio = args.at("ratio")->f();
         }
         Tensor *mask_t =
-            new Tensor(in->getTensor()->getTensorShape(), in->getDataType());
+            new Tensor(in->getTensor()->getType());
         auto mask = new TensorNode(opName+"_mask", mask_t);
 
         opNode = new OpNode(opName, new DropoutOp(ratio));
         LINKUPPER(opNode, in, mask);
 
         std::string res_name = op.output(0);
-        auto *tshape = in->getTensor()->getTensorShape();
-        auto *out_tnode = new TensorNode(res_name, new Tensor(tshape), opNode);
+        auto *out_tnode = new TensorNode(res_name, new Tensor(in->getTensor()->getType()), opNode);
         name_tNode_map_[res_name] = out_tnode;
         graph_->pushTensorNode(mask, out_tnode);
     }
@@ -492,10 +491,11 @@ void Caffe2Importer::loadTensor(const caffe2::OperatorDef &op) {
         }
 
         // get "shape"
-        std::vector<unsigned long> *shape = new std::vector<unsigned long>();
+        // std::vector<unsigned long> *shape = new std::vector<unsigned long>();
+        std::vector<unsigned long> shape;
         for (auto i : args["shape"]->ints())
-            shape->push_back(i);
-        tensor->reset(new TensorShape(shape));
+            shape.push_back(i);
+        tensor->reset(TensorType(shape));
 
         // get value
         std::vector<float> tensorValue;
@@ -519,7 +519,7 @@ void Caffe2Importer::loadTensor(const caffe2::OperatorDef &op) {
             std::string name = output;
             std::cout << "tensor " << name << std::endl
                       << "\tpath: " << path << std::endl
-                      << "\tdim : " << shape->size() << std::endl
+                      << "\tdim : " << shape.size() << std::endl
                       << "\tlay : " << tensor->getMemLayout() << std::endl
                       << "\tsize: " << tensor->size() << std::endl;
         }
@@ -534,10 +534,10 @@ void Caffe2Importer::loadTensor(const caffe2::OperatorDef &op) {
         }
 
         // get "shape"
-        std::vector<unsigned long> *shape = new std::vector<unsigned long>();
+        std::vector<size_t> shape;
         for (auto i : args["shape"]->ints())
-            shape->push_back(i);
-        tensor->reset(new TensorShape(shape));
+            shape.push_back(i);
+        tensor->reset(TensorType(shape));
 
         float constValue = (args.count("value") && args["value"]->has_f())
                                ? args["value"]->f()
@@ -547,7 +547,7 @@ void Caffe2Importer::loadTensor(const caffe2::OperatorDef &op) {
         for (auto &output : op.output()) {
             std::string name = output;
             std::cout << "tensor " << name << std::endl
-                      << "\tdim : " << shape->size() << std::endl
+                      << "\tdim : " << shape.size() << std::endl
                       << "\tsize: " << tensor->size() << std::endl
                       << "\tvalue:" << constValue << std::endl;
         }

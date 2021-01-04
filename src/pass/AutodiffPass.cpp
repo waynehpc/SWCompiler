@@ -83,7 +83,7 @@ void AutodiffPass::run(IRGraph* graph_train)
     for (int i = 0; i < graph_train->topologyNum(); i++) {
         for (int j = 0; j < graph_train->getNumInTopoLevel(i); j++) {
             auto node = graph_train->getNodeInTopo(i, j);
-            SWLOG_DEBUG(4) << "TopoLevel.." << i << "\tType..." 
+            SWLOG_DEBUG(2) << "TopoLevel.." << i << "\tType..." 
                 << (node->nodeType() == TENSOR_NODE ? "TENSOR\t" : "OP\t")
                 << (node->name()) << std::endl;
             topo_nodes.push_back(node);

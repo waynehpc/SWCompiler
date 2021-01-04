@@ -113,15 +113,15 @@ enum OpType { TENSOR_OP, BASIC_OP, DL_OP };
 
 enum NodeType { TENSOR_NODE, OP_NODE };
 
-enum TensorType {
-    D5 = 5,
-    D4 = 4,
-    D3 = 3,
-    D2 = 2,
-    D1 = 1,
-    D0 = 0,
-    UNKNOWN = -1
-};
+// enum TensorType {
+//     D5 = 5,
+//     D4 = 4,
+//     D3 = 3,
+//     D2 = 2,
+//     D1 = 1,
+//     D0 = 0,
+//     UNKNOWN = -1
+// };
 
 typedef enum {
     layout_default = 0,

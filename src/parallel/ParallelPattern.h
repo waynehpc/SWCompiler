@@ -16,6 +16,7 @@
 #include "graphIR/TensorNode.h"
 #include "op/Op.h"
 #include "op/dlOp/dlOp.h"
+#include "tensor/tensor.h"
 #include <climits>
 
 using namespace swc::op;
@@ -52,21 +53,28 @@ class ForkPattern : public BasePattern {
         SWLOG_DEBUG(4) << "ForkPattern on tensor " << _tensornode->name()
                        << ", strategy= " << strategy << "\n";
         TilingLabel *tlabel = _tensornode->getTilingLabel();
-        TensorShape *originshape = _tensornode->getTensor()->getTensorShape();
-        DataType dtype = _tensornode->getDataType();
+        // TensorXXShape *originshape = _tensornode->getTensor()->getTensorXXShape();
+        TensorType originType = _tensornode->getTensor()->getType();
+        // DataType dtype = _tensornode->getDataType();
 
         TensorNode *tilenode;
         if (strategy >= 0) {
-            TensorShape *tileTensorShape =
-                originshape->getTiledShape(strategy, _num);
+            // TensorXXShape *tileTensorXXShape =
+            //     originshape->getTiledShape(strategy, _num);
+            // tilenode = new TensorNode(_tensornode->name() + "_tile",
+            //                           new Tensor(tileTensorXXShape, dtype));
             tilenode = new TensorNode(_tensornode->name() + "_tile",
-                                      new Tensor(tileTensorShape, dtype));
+                                      new Tensor(originType.getTiledTensorType(strategy, _num)));
         } else if (strategy == -1) {
+            // tilenode = new TensorNode(_tensornode->name() + "_replicate",
+            //                           new Tensor(originshape, dtype));
             tilenode = new TensorNode(_tensornode->name() + "_replicate",
-                                      new Tensor(originshape, dtype));
+                                      new Tensor(originType));
         } else
+            // tilenode = new TensorNode(_tensornode->name() + "_unknown",
+            //                           new Tensor(originshape, dtype));
             tilenode = new TensorNode(_tensornode->name() + "_unknown",
-                                      new Tensor(originshape, dtype));
+                                      new Tensor(originType));
 
         tilenode->getLabel()->setDeviceLabel(_p_dev);
 
@@ -100,21 +108,29 @@ class TransformPattern : public BasePattern {
         SWLOG_DEBUG(4) << "TransformPattern on tensor " << _tensornode->name()
                        << ", strategy= " << strategy << "\n";
         TilingLabel *tlabel = _tensornode->getTilingLabel();
-        TensorShape *originshape = _tensornode->getTensor()->getTensorShape();
-        DataType dtype = _tensornode->getDataType();
+        // TensorXXShape *originshape = _tensornode->getTensor()->getTensorXXShape();
+        TensorType originType = _tensornode->getTensor()->getType();
+        // DataType dtype = _tensornode->getDataType();
 
         TensorNode *tilenode;
         if (strategy >= 0) {
-            TensorShape *tileTensorShape =
-                originshape->getTiledShape(strategy, _num);
+            // TensorXXShape *tileTensorXXShape =
+            //     originshape->getTiledShape(strategy, _num);
+            // tilenode = new TensorNode(_tensornode->name() + "_tile",
+            //                           new Tensor(tileTensorXXShape, dtype));
             tilenode = new TensorNode(_tensornode->name() + "_tile",
-                                      new Tensor(tileTensorShape, dtype));
+                                      new Tensor(originType.getTiledTensorType(strategy, _num)));
         } else if (strategy == -1) {
+            // tilenode = new TensorNode(_tensornode->name() + "_replicate",
+            //                           new Tensor(originshape, dtype));
             tilenode = new TensorNode(_tensornode->name() + "_replicate",
-                                      new Tensor(originshape, dtype));
-        } else
+                                      new Tensor(originType));
+        } else {
+            // tilenode = new TensorNode(_tensornode->name() + "_unknown",
+            //                           new Tensor(originshape, dtype));
             tilenode = new TensorNode(_tensornode->name() + "_unknown",
-                                      new Tensor(originshape, dtype));
+                                      new Tensor(originType));
+        }
 
         tilenode->getLabel()->setDeviceLabel(_p_dev);
 
@@ -158,23 +174,32 @@ class JoinPattern : public BasePattern {
         SWLOG_DEBUG(4) << "JoinPattern on tensor " << _tensornode->name()
                        << ", strategy= " << strategy << "\n";
         TilingLabel *tlabel = _tensornode->getTilingLabel();
-        TensorShape *originshape = _tensornode->getTensor()->getTensorShape();
-        DataType dtype = _tensornode->getDataType();
+        // TensorXXShape *originshape = _tensornode->getTensor()->getTensorXXShape();
+        TensorType originType = _tensornode->getTensor()->getType();
+        // DataType dtype = _tensornode->getDataType();
 
         TensorNode *tilenode;
         if (strategy >= 0) {
 
-            TensorShape *tileTensorShape =
-                originshape->getTiledShape(strategy, _num);
+            // TensorXXShape *tileTensorXXShape =
+            //     originshape->getTiledShape(strategy, _num);
+            // tilenode = new TensorNode(_tensornode->name() + "_t" +
+            //                               std::to_string(strategy),
+            //                           new Tensor(tileTensorXXShape, dtype));
             tilenode = new TensorNode(_tensornode->name() + "_t" +
                                           std::to_string(strategy),
-                                      new Tensor(tileTensorShape, dtype));
+                                      new Tensor(originType.getTiledTensorType(strategy, _num)));
         } else if (strategy == -2) {
+            // tilenode = new TensorNode(_tensornode->name() + "_tr",
+            //                           new Tensor(originshape, dtype));
             tilenode = new TensorNode(_tensornode->name() + "_tr",
-                                      new Tensor(originshape, dtype));
-        } else
+                                      new Tensor(originType));
+        } else {
+            // tilenode = new TensorNode(_tensornode->name() + "_unknown",
+            //                           new Tensor(originshape, dtype));
             tilenode = new TensorNode(_tensornode->name() + "_unknown",
-                                      new Tensor(originshape, dtype));
+                                      new Tensor(originType));
+        }
 
         tilenode->getLabel()->setDeviceLabel(_p_dev);
 
