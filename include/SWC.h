@@ -8,38 +8,38 @@
 #ifndef _SWC_H
 #define _SWC_H
 
-#include "../src/SWDSL.h"
-#include "../src/SWLOG.h"
-#include "../src/common.h"
+#include "SWDSL.h"
+#include "SWLOG.h"
+#include "common.h"
 
-#include "../src/op/dlOp/dlOp.h"
-#include "../src/op/tensorOp/tensorOps.h"
-#include "../src/tensor/tensor.h"
+#include "op/dlOp/dlOp.h"
+#include "op/tensorOp/tensorOps.h"
+#include "tensor/tensor.h"
 
-#include "../src/graphIR/IRGraph.h"
-#include "../src/graphIR/OpNode.h"
-#include "../src/graphIR/TensorNode.h"
+#include "graphIR/IRGraph.h"
+#include "graphIR/OpNode.h"
+#include "graphIR/TensorNode.h"
 
-#include "../src/pass/Label.h"
-#include "../src/pass/Optimizer.h"
+#include "pass/Label.h"
+#include "pass/Optimizer.h"
 
-#include "../src/tool/dotGen.h"
+#include "tool/dotGen.h"
 
-#include "../src/diff/AutoDiff.h"
+#include "diff/AutoDiff.h"
 
 
-#include "../src/codegen/Codegen.h"
+#include "codegen/Codegen.h"
 
-#include "../src/engine/Engine.h"
+#include "engine/Engine.h"
 
-#include "../src/pass/OptimizePass.h"
-#include "../src/pass/LabelingPass.h"
-#include "../src/pass/LoweringPass.h"
-#include "../src/pass/EliminationPass.h"
-#include "../src/pass/RenamingNodePass.h"
-// #include "../src/pass/ParallelingPass.h"
-#include "../src/pass/ParallelLabelingPass.h"
-#include "../src/pass/ParallelLoweringPass.h"
-#include "../src/pass/AutodiffPass.h"
+#include "pass/OptimizePass.h"
+#include "pass/LabelingPass.h"
+#include "pass/LoweringPass.h"
+#include "pass/EliminationPass.h"
+#include "pass/RenamingNodePass.h"
+// #include "pass/ParallelingPass.h"
+#include "pass/ParallelLabelingPass.h"
+#include "pass/ParallelLoweringPass.h"
+#include "pass/AutodiffPass.h"
 
 #endif
