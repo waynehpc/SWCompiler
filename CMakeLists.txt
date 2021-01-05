@@ -66,6 +66,8 @@ add_subdirectory(src)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_definitions(-DGOOGLE_PROTOBUF_NO_RTTI)
 
+#set(PROTOBUF_INCLUDE_DIRS, "/home/wwz/software/protobuf-3.14.0/build/include")
+message(STATUS "hhhh ${PROTOBUF_INCLUDE_DIRS}")
 include_directories(${PROTOBUF_INCLUDE_DIRS})
 
 protobuf_generate_cpp(CAFFE2_SRCS CAFFE2_HDRS src/importer/caffe2.proto)
