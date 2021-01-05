@@ -748,33 +748,78 @@ class Conv2dWithActivationGradOp : public Op {
     void destroy() {}
 };
 
-class BatchNormalizationOp : public Op {
+class BatchNorm2dOp : public Op {
     float epsilon_;
+    float momentum_;
 
   public:
-    BatchNormalizationOp(float eps)
-        : Op(DL_OP, 5, 1, std::string("BatchNormalization")) {
-        epsilon_ = eps;
-        // TODO : dims of input
+    BatchNorm2dOp(float eps = 1e-5, float momentum = 0.1)
+        : Op(DL_OP, 5, 1, std::string("BatchNorm2d")), epsilon_(eps),
+          momentum_(momentum) {
+
+        this->_inputNDims.push_back(4); // input
+        this->_inputNDims.push_back(1); // mean
+        this->_inputNDims.push_back(1); // var
+        this->_inputNDims.push_back(1); // scale
+        this->_inputNDims.push_back(1); // shift
+
+        this->_outputNDims.push_back(4); // output
+
+        this->_einOp = 1;
+        this->_einRep.push_back("b__c"); // input
+        this->_einRep.push_back("c");    // mean
+        this->_einRep.push_back("c");    // var
+        this->_einRep.push_back("c");    // scale
+        this->_einRep.push_back("c");    // shift
+
+        this->_einRep.push_back("b__c"); // output
     }
     float getEpsilon() { return epsilon_; }
-    ~BatchNormalizationOp();
+    float getMomentum() { return momentum_; }
+    ~BatchNorm2dOp();
     void destroy() {}
     void autoDiff(IRGraph *graph, IRNode *opNode,
                   std::unordered_map<IRNode *, IRNode *> &gradNodeMap) override;
 };
 
-class BNGradOp : public Op {
+class BatchNorm2dGrad : public Op {
     float epsilon_;
+    float momentum_;
 
   public:
-    BNGradOp(float eps)
-        : Op(DL_OP, 5, 1, std::string("BNGrad")) {
+    BatchNorm2dGrad(float eps = 1e-5, float momentum = 0.1)
+        : Op(DL_OP, 6, 3, std::string("BatchNorm2dGrad")), epsilon_(eps),
+          momentum_(momentum) {
         epsilon_ = eps;
-        // TODO : dims of input
+
+        this->_inputNDims.push_back(4); // input
+        this->_inputNDims.push_back(1); // mean
+        this->_inputNDims.push_back(1); // var
+        this->_inputNDims.push_back(1); // scale
+        this->_inputNDims.push_back(1); // shift
+        this->_inputNDims.push_back(4); // outputG
+
+        this->_outputNDims.push_back(4); // inputG
+        this->_outputNDims.push_back(1); // scaleG
+        this->_outputNDims.push_back(1); // shiftG
+
+        this->_einOp = 1;
+        this->_einRep.push_back("b__c"); // input
+        this->_einRep.push_back("c");    // mean
+        this->_einRep.push_back("c");    // var
+        this->_einRep.push_back("c");    // scale
+        this->_einRep.push_back("c");    // shift
+        this->_einRep.push_back("b__c"); // outputG
+
+        this->_einRep.push_back("b__c"); // inputG
+        this->_einRep.push_back("c");    // scaleG
+        this->_einRep.push_back("c");    // shiftG
     }
+
     float getEpsilon() { return epsilon_; }
-    ~BNGradOp();
+    float getMomentum() { return momentum_; }
+
+    ~BatchNorm2dGrad() = default;
     void destroy() {}
 };
 

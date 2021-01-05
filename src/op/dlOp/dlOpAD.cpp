@@ -233,20 +233,26 @@ void Conv2dWithActivationOp::autoDiff(
     graph->pushOpNode(N);
 }
 
-void BatchNormalizationOp::autoDiff(IRGraph *graph, IRNode *opNode,
+void BatchNorm2dOp::autoDiff(IRGraph *graph, IRNode *opNode,
                      std::unordered_map<IRNode *, IRNode *> &gradNodeMap) {
     SWLOG_DEBUG(4) << "autoDiff: " << _opClassName << std::endl;
     auto *input = opNode->getParentNode(0);
+    auto *mean = opNode->getParentNode(1);
+    auto *var = opNode->getParentNode(2);
+    auto *scale = opNode->getParentNode(3);
+    auto *shift = opNode->getParentNode(4);
+
     auto *output = opNode->getChildNode(0);
-    assert(gradNodeMap.count(output) && "grad of BatchNormalization output unfound\n");
+    
+    assert(gradNodeMap.count(output) && "grad of BatchNorm2d output unfound\n");
     auto *outputGrad = gradNodeMap[output];
 
-    auto *bn = (BatchNormalizationOp *)((OpNode *)opNode)->getOp();
+    auto *bn = (BatchNorm2dOp *)((OpNode *)opNode)->getOp();
     auto eps = bn->getEpsilon();
+    auto momentum = bn->getMomentum();
 
-    auto *N = new OpNode(opNode->name() + "_grad", new BNGradOp(eps));
-    N->exlinkUpperNode(input, output, outputGrad);
-    //     N->exlinkUpperNode(input, outputGrad);
+    auto *N = new OpNode(opNode->name() + "_grad", new BatchNorm2dGrad(eps, momentum));
+    N->exlinkUpperNode(input, mean, var, scale, shift, outputGrad);
 
     gradNodeMap[opNode] = N;
     graph->pushOpNode(N);
