@@ -44,7 +44,7 @@ int main() {
     graph->findInOut();
     graph->updateTopology();
 
-    dotGen(graph, "resnet_import.dot");
+    svgGen(graph, "resnet_import.dot");
 
     Config config;
     config.mkldnn = true;

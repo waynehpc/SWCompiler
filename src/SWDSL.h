@@ -21,14 +21,6 @@
     }
 
 // TensorNode
-/*
-#define TENSOR(name, args...)                                           \
-    TensorNode *name = new TensorNode(#name);                           \
-    TensorXXShape *name##_TensorXXShape =                                   \
-        new TensorXXShape(new vector<size_t>({args}));                    \
-    Tensor *name##_Tensor = new Tensor(name##_TensorXXShape);             \
-    name->setTensor(name##_Tensor)
-*/
 #define TENSOR(name, args...)                                           \
     TensorNode *name = new TensorNode(#name);                           \
     Tensor *name##_Tensor = new Tensor({args});                         \

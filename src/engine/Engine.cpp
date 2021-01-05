@@ -193,9 +193,9 @@ void Engine::transformForMKLDNN() {
                 // DESTROYUPPER(node, src);
                 LINKUPPER(trans_op, src);
 
-                Tensor *trans_out_t = new Tensor(
-                    src->getTensor()->getShuffledDims(NHWC2NCHW),
-                    src->getDataType(), layout_nchw);
+                Tensor *trans_out_t =
+                    new Tensor(src->getTensor()->getShuffledDims(NHWC2NCHW),
+                               src->getDataType(), layout_nchw);
                 std::string trans_out_name = src->name() + "_t";
                 auto trans_out =
                     new TensorNode(trans_out_name, trans_out_t, trans_op);
@@ -286,8 +286,8 @@ void Engine::transformForMKLDNN() {
             */
         }
 
-        if (dynamic_cast<MatrixMatrixFCBiasOp *>(node->getOp()) ||
-            dynamic_cast<MatrixMatrixMulOp *>(node->getOp())) {
+        else if (dynamic_cast<MatrixMatrixFCBiasOp *>(node->getOp()) ||
+                 dynamic_cast<MatrixMatrixMulOp *>(node->getOp())) {
             /*
              * our framework: when import caffe2, trans w from oCiC to iCoC(chw,
              * OC), trans [in] from our nhwc to nchw consequently, for mkldnn
@@ -328,10 +328,10 @@ void Engine::transformForMKLDNN() {
                 << "FC_w " << weight->name() << " transpose to oCiC\n";
         }
 
-        if (dynamic_cast<BatchNormalizationOp *>(node->getOp()) ||
-            dynamic_cast<MaxPoolOp *>(node->getOp()) ||
-            dynamic_cast<AvgPoolOp *>(node->getOp()) ||
-            dynamic_cast<ReluOp *>(node->getOp())) {
+        else if (dynamic_cast<BatchNorm2dOp *>(node->getOp()) ||
+                 dynamic_cast<MaxPoolOp *>(node->getOp()) ||
+                 dynamic_cast<AvgPoolOp *>(node->getOp()) ||
+                 dynamic_cast<ReluOp *>(node->getOp())) {
             auto src = (TensorNode *)node->getParentNode(0);
             auto dst = (TensorNode *)node->getChildNode(0);
             SWLOG_DEBUG(10)
@@ -385,7 +385,8 @@ void Engine::transformForMKLDNN() {
             graph_->pushTensorNode(conv_out);
             graph_->pushOpNode(trans_out_op);
         }
-        if (dynamic_cast<ElementAddOp *>(node->getOp())) {
+
+        else if (dynamic_cast<ElementAddOp *>(node->getOp())) {
             int num_srcs = node->parentNum();
             for (int i = 0; i < num_srcs; i++) {
                 auto src = (TensorNode *)node->getParentNode(i);
@@ -407,9 +408,9 @@ void Engine::transformForMKLDNN() {
                 // DESTROYUPPER(node, src);
                 LINKUPPER(trans_op, src);
 
-                Tensor *trans_out_t = new Tensor(
-                    src->getTensor()->getShuffledDims(NHWC2NCHW),
-                    src->getDataType(), layout_nchw);
+                Tensor *trans_out_t =
+                    new Tensor(src->getTensor()->getShuffledDims(NHWC2NCHW),
+                               src->getDataType(), layout_nchw);
                 std::string trans_out_name = src->name() + "_t";
                 auto trans_out =
                     new TensorNode(trans_out_name, trans_out_t, trans_op);

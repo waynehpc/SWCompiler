@@ -1391,7 +1391,7 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << tensors_name_map_[out] << ", " << n << ");\n";
     }
 
-    if ((oplabel->getTypeNameLabel()).compare("MatrixMatrixFCBias") == 0) {
+    else if ((oplabel->getTypeNameLabel()).compare("MatrixMatrixFCBias") == 0) {
         auto *in = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *w = ((TensorNode *)op->getParentNode(1))->getTensor();
         auto *b = ((TensorNode *)op->getParentNode(2))->getTensor();
@@ -1531,7 +1531,7 @@ void Codegen::emitFuncCall(OpNode *op) {
         }
     }
 
-    if ((oplabel->getTypeNameLabel()).compare("Reshape") == 0) {
+    else if ((oplabel->getTypeNameLabel()).compare("Reshape") == 0) {
         auto *A = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *B = ((TensorNode *)op->getChildNode(0))->getTensor();
 
@@ -1539,7 +1539,7 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << ";\n";
     }
 
-    if ((oplabel->getTypeNameLabel()).compare("TensorAscend") == 0) {
+    else if ((oplabel->getTypeNameLabel()).compare("TensorAscend") == 0) {
         auto *A = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *B = ((TensorNode *)op->getChildNode(0))->getTensor();
 
@@ -1547,7 +1547,7 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << ";\n";
     }
 
-    if ((oplabel->getTypeNameLabel()).compare("TensorDescend") == 0) {
+    else if ((oplabel->getTypeNameLabel()).compare("TensorDescend") == 0) {
         auto *A = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *B = ((TensorNode *)op->getChildNode(0))->getTensor();
 
@@ -1555,8 +1555,8 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << ";\n";
     }
 
-    if ((oplabel->getTypeNameLabel()) == "BatchedAdd" ||
-        (oplabel->getTypeNameLabel()) == "MatrixVectorAdd") {
+    else if ((oplabel->getTypeNameLabel()) == "BatchedAdd" ||
+             (oplabel->getTypeNameLabel()) == "MatrixVectorAdd") {
         auto *A = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *B = ((TensorNode *)op->getParentNode(1))->getTensor();
         auto *C = ((TensorNode *)op->getChildNode(0))->getTensor();
@@ -1572,7 +1572,8 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << ", " << tensors_name_map_[A] << ", " << tensors_name_map_[B]
                 << ", " << sliceNum << ", " << sliceSize << ");\n";
     }
-    if ((oplabel->getTypeNameLabel()) == "BatchedReduceAdd") {
+
+    else if ((oplabel->getTypeNameLabel()) == "BatchedReduceAdd") {
         auto *input = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *output = ((TensorNode *)op->getChildNode(0))->getTensor();
 
@@ -1588,7 +1589,7 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << ", " << sliceNum << ", " << sliceSize << ");\n";
     }
 
-    if ((oplabel->getTypeNameLabel()) == "ElementAdd") {
+    else if ((oplabel->getTypeNameLabel()) == "ElementAdd") {
         auto *A = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *B = ((TensorNode *)op->getParentNode(1))->getTensor();
         auto *C = ((TensorNode *)op->getChildNode(0))->getTensor();
@@ -1672,7 +1673,7 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << tensors_name_map_[C] << ");\n";
     }
 
-    if ((oplabel->getTypeNameLabel()) == "Conv2d") {
+    else if ((oplabel->getTypeNameLabel()) == "Conv2d") {
         auto *input = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *filter = ((TensorNode *)op->getParentNode(1))->getTensor();
         auto *bias = ((TensorNode *)op->getParentNode(2))->getTensor();
@@ -1839,7 +1840,7 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << padsVar << ", " << group << ");\n";
     }
 
-    if ((oplabel->getTypeNameLabel()) == "Conv2dGrad") {
+    else if ((oplabel->getTypeNameLabel()) == "Conv2dGrad") {
         auto *input = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *filter = ((TensorNode *)op->getParentNode(1))->getTensor();
         /*
@@ -1886,7 +1887,7 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << padsVar << ", " << group << ");\n";
     }
 
-    if ((oplabel->getTypeNameLabel()) == "BatchNormalization") {
+    else if ((oplabel->getTypeNameLabel()) == "BatchNorm2d") {
         // temp wayne 12.24
         return;
 
@@ -1897,7 +1898,7 @@ void Codegen::emitFuncCall(OpNode *op) {
         auto *var = ((TensorNode *)op->getParentNode(4))->getTensor();
         auto *out = ((TensorNode *)op->getChildNode(0))->getTensor();
 
-        auto *bn_op = (BatchNormalizationOp *)op->getOp();
+        auto *bn_op = (BatchNorm2dOp *)op->getOp();
         float epsilon = bn_op->getEpsilon();
 
         if (config_.mkldnn) {
@@ -1978,12 +1979,8 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << std::setprecision(12) << epsilon << ");\n";
     }
 
-    if ((oplabel->getTypeNameLabel()) == "BatchNormalization") {
-        return;
-    }
-    
-    if ((oplabel->getTypeNameLabel()) == "MaxPool" ||
-        (oplabel->getTypeNameLabel()) == "AveragePool") {
+    else if ((oplabel->getTypeNameLabel()) == "MaxPool" ||
+             (oplabel->getTypeNameLabel()) == "AveragePool") {
         auto *input = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *out = ((TensorNode *)op->getChildNode(0))->getTensor();
 
@@ -2109,7 +2106,7 @@ void Codegen::emitFuncCall(OpNode *op) {
         }
     }
 
-    if ((oplabel->getTypeNameLabel()) == "MaxPoolGrad") {
+    else if ((oplabel->getTypeNameLabel()) == "MaxPoolGrad") {
         auto *input = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *output = ((TensorNode *)op->getParentNode(1))->getTensor();
         auto *outputG = ((TensorNode *)op->getParentNode(2))->getTensor();
@@ -2140,7 +2137,7 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << ");\n";
     }
 
-    if ((oplabel->getTypeNameLabel()) == "Relu") {
+    else if ((oplabel->getTypeNameLabel()) == "Relu") {
         auto *input = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *out = ((TensorNode *)op->getChildNode(0))->getTensor();
 
@@ -2196,7 +2193,7 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << ", " << tensors_name_map_[out] << ", " << size << ");\n";
     }
 
-    if ((oplabel->getTypeNameLabel()) == "ReluGrad") {
+    else if ((oplabel->getTypeNameLabel()) == "ReluGrad") {
         // ReluGrad src dstGrad -> srGrad (no link to orig_output)
         auto *input = ((TensorNode *)op->getParentNode(0))->getTensor();
         // auto *outp   ut = ((TensorNode *)op->getParentNode(1))->getTensor();
@@ -2209,7 +2206,7 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << tensors_name_map_[outputG] << ", " << size << ");\n";
     }
 
-    if ((oplabel->getTypeNameLabel()) == "Transpose") {
+    else if ((oplabel->getTypeNameLabel()) == "Transpose") {
         auto *input = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *out = ((TensorNode *)op->getChildNode(0))->getTensor();
 
@@ -2280,7 +2277,7 @@ void Codegen::emitFuncCall(OpNode *op) {
         }
     }
 
-    if ((oplabel->getTypeNameLabel()) == "MatrixTranspose") {
+    else if ((oplabel->getTypeNameLabel()) == "MatrixTranspose") {
         auto *input = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *out = ((TensorNode *)op->getChildNode(0))->getTensor();
 
@@ -2346,7 +2343,7 @@ void Codegen::emitFuncCall(OpNode *op) {
         }
     }
 
-    if ((oplabel->getTypeNameLabel()).compare("MatrixTanh") == 0) {
+    else if ((oplabel->getTypeNameLabel()).compare("MatrixTanh") == 0) {
         // TODO assert
         auto *A = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *B = ((TensorNode *)op->getChildNode(0))->getTensor();
@@ -2357,7 +2354,8 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << tensors_name_map_[A] << ", " << n << ", "
                 << tensors_name_map_[B] << ", " << n << ");\n";
     }
-    if ((oplabel->getTypeNameLabel()).compare("MatrixSoftmax") == 0) {
+
+    else if ((oplabel->getTypeNameLabel()).compare("MatrixSoftmax") == 0) {
         // TODO assert
         auto *input = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *out = ((TensorNode *)op->getChildNode(0))->getTensor();
@@ -2417,7 +2415,8 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << tensors_name_map_[out] << ", " << n << ");\n";
     }
 
-    if ((oplabel->getTypeNameLabel()).compare("MatrixSoftmaxWithLoss") == 0) {
+    else if ((oplabel->getTypeNameLabel()).compare("MatrixSoftmaxWithLoss") ==
+             0) {
         auto *A = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *label = ((TensorNode *)op->getParentNode(1))->getTensor();
         auto *prob = ((TensorNode *)op->getChildNode(0))->getTensor();
@@ -2432,7 +2431,7 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << ");\n";
     }
 
-    if ((oplabel->getTypeNameLabel()).compare("ArgMax") == 0) {
+    else if ((oplabel->getTypeNameLabel()).compare("ArgMax") == 0) {
         auto *A = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *B = ((TensorNode *)op->getChildNode(0))->getTensor();
         int m = A->getDim(0);
@@ -2448,7 +2447,7 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << ", " << topK << ");\n";
     }
 
-    if ((oplabel->getTypeNameLabel()).compare("Accuracy") == 0) {
+    else if ((oplabel->getTypeNameLabel()).compare("Accuracy") == 0) {
         auto *pred = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *label = ((TensorNode *)op->getParentNode(1))->getTensor();
         auto *accum = ((TensorNode *)op->getChildNode(0))->getTensor();
@@ -2460,7 +2459,7 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << tensors_name_map_[accum] << ", " << m << ", " << n << ");\n";
     }
 
-    if ((oplabel->getTypeNameLabel()).compare("Debug") == 0) {
+    else if ((oplabel->getTypeNameLabel()).compare("Debug") == 0) {
         auto *A = ((TensorNode *)op->getParentNode(0))->getTensor();
 
         // assert(A->getNDim() == 2);
@@ -2473,7 +2472,7 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << ");\n";
     }
 
-    if ((oplabel->getTypeNameLabel()).compare("MatrixTanhGrad") == 0) {
+    else if ((oplabel->getTypeNameLabel()).compare("MatrixTanhGrad") == 0) {
         // TODO assert
         auto *input = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *output = ((TensorNode *)op->getParentNode(1))->getTensor();
@@ -2488,7 +2487,7 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << tensors_name_map_[outputG] << ", " << n << ");\n";
     }
     // TODO: depreciate this, do not link label to MatrixSoftmax
-    if ((oplabel->getTypeNameLabel()).compare("MatrixSoftmaxGrad") == 0) {
+    else if ((oplabel->getTypeNameLabel()).compare("MatrixSoftmaxGrad") == 0) {
         // TODO assert
         auto *input = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *label = ((TensorNode *)op->getParentNode(1))->getTensor();
@@ -2504,8 +2503,8 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << tensors_name_map_[label] << ");\n";
     }
 
-    if ((oplabel->getTypeNameLabel()).compare("MatrixSoftmaxWithLossGrad") ==
-        0) {
+    else if ((oplabel->getTypeNameLabel())
+                 .compare("MatrixSoftmaxWithLossGrad") == 0) {
         /*
         auto *input = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *label = ((TensorNode *)op->getParentNode(1))->getTensor();
@@ -2528,7 +2527,7 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << tensors_name_map_[label] << ");\n";
     }
 
-    if ((oplabel->getTypeNameLabel()).compare("SGD") == 0) {
+    else if ((oplabel->getTypeNameLabel()).compare("SGD") == 0) {
         auto *input = ((TensorNode *)op->getParentNode(0))->getTensor();
         auto *inputG = ((TensorNode *)op->getParentNode(1))->getTensor();
         auto *momen = ((TensorNode *)op->getParentNode(2))->getTensor();
@@ -2551,7 +2550,12 @@ void Codegen::emitFuncCall(OpNode *op) {
                 << ", " << tensors_name_map_[inputG] << ", "
                 << tensors_name_map_[momen] << ", " << lr << ", " << decay
                 << ", " << momentum << ", " << batch << ");\n";
+    } else {
+        SWLOG_ERROR << "unimplemented op " << oplabel->getTypeNameLabel()
+                    << std::endl;
+        // exit(0);
     }
+
     SWLOG_DEBUG(2) << "end genKernelCall for " << op->name() << "\n";
 
     if (config_.compute_op_annotation) {
