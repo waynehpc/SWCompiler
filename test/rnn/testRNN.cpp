@@ -85,6 +85,10 @@ TensorNode *addRNN(IRGraph *graph, vector<TensorNode*> input, TensorNode *hidden
 	auto *wx = createTensor(graph, {0, hidden_size}, name+"_wx");
 	auto *wh = createTensor(graph, {0, hidden_size}, name+"_wh");
 	auto *b = createTensor(graph, {hidden_size}, name+"_b");
+	wx->setTraining(1);
+	wh->setTraining(1);
+	b->setTraining(1);
+
 	auto *hidden = hidden_init;
 	for(int i=0; i<time_stamp; i++){
 		hidden = addRNN_unit(graph, wx, wh, b, hidden, input[i], name+"rnn_unit_"+to_string(i));
@@ -163,55 +167,55 @@ int main()
 
 	svgGen(lstmtc, "lstmtc.dot");
 
-	//Config config;
-    //config.train_mode = false;
-	////config.mpi = true;
-    ////config.mpi_size = 4;
-    //config.train_config.optimizer = "sgd";
-    //config.train_config.train_data_file = "xxx";
-    //config.train_config.label_bytes = BytesProto::ONE_BYTE_AS_INT;
-    //config.train_config.data_bytes = BytesProto::FOUR_BYTES_AS_FLOAT;
-    //config.train_config.train_data_samples = 50000;
-    //// config.train_config.snapshot = 1000;
-    //config.train_config.max_iters = 1000;
-    //config.train_config.display = 50;
-    //
-	//config.compute_op_annotation = true;
-    //// config.comm_op_annotation = true;
-    //config.parallel_preference = COMM_SAVING;
-    //// config.parallel_preference = MEM_SAVING;
+	Config config;
+    config.train_mode = true;
+	//config.mpi = true;
+    //config.mpi_size = 4;
+    config.train_config.optimizer = "sgd";
+    config.train_config.train_data_file = "xxx";
+    config.train_config.label_bytes = BytesProto::ONE_BYTE_AS_INT;
+    config.train_config.data_bytes = BytesProto::FOUR_BYTES_AS_FLOAT;
+    config.train_config.train_data_samples = 50000;
+    // config.train_config.snapshot = 1000;
+    config.train_config.max_iters = 1000;
+    config.train_config.display = 50;
+    
+	config.compute_op_annotation = true;
+    // config.comm_op_annotation = true;
+    config.parallel_preference = COMM_SAVING;
+    // config.parallel_preference = MEM_SAVING;
 
-	///*when benchmark enabled, disable emit some code*/
-    //config.benchmark = true;
-    ///* not do lowering for node liek FC, FCGrad etc.*/
-    //config.enable_lowering = false;
+	/*when benchmark enabled, disable emit some code*/
+    config.benchmark = true;
+    /* not do lowering for node liek FC, FCGrad etc.*/
+    config.enable_lowering = false;
 
-	///* about parallel strategy*/
-    //// config.force_data_parallel = true;
-    //config.geneticalgo_opt_parallel = true;
-    //// config.handcraft_parallel = true;
+	/* about parallel strategy*/
+    // config.force_data_parallel = true;
+    config.geneticalgo_opt_parallel = true;
+    // config.handcraft_parallel = true;
 
-	//lstmtc->setConfig(config);
+	lstmtc->setConfig(config);
 
-	//Engine engine(lstmtc);
-	//engine.compile();
+	Engine engine(lstmtc);
+	engine.compile();
 
-	////dotGen(lstmtc, "lstmtc_train.dot");
-	////svgGen(lstmtc, "lstmtc_train.dot");
-	//
+	dotGen(lstmtc, "lstmtc_train.dot");
+	//svgGen(lstmtc, "lstmtc_train.dot");
+	
 
-	////cout << lstmtc->getCommTrace() << "\n";
-    ////cout << "lstmtc-" << lstmtc->getCommCost() << "\n";
+	//cout << lstmtc->getCommTrace() << "\n";
+    //cout << "lstmtc-" << lstmtc->getCommCost() << "\n";
 
-	////string code = engine.genCode();
+	//string code = engine.genCode();
 
 
-	//// TODO
-	//// 0. bottleneck, resnet50
-	//// 1. addBN 5 inputs
-	//// 2. BN autodiff
-	//// 3. bngrad kernels and codegen, cudacodegen
-	//// einSum of Element Add
+	// TODO
+	// 0. bottleneck, resnet50
+	// 1. addBN 5 inputs
+	// 2. BN autodiff
+	// 3. bngrad kernels and codegen, cudacodegen
+	// einSum of Element Add
 	return 0;
 }
 
