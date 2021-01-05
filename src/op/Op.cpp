@@ -1,8 +1,8 @@
 /*************************************************************************
-	> File Name: Op.cpp
-	> Author: cryinlaugh
-	> Mail: cryinlaugh@gmail.com
-	> Created Time: 二 12/ 4 15:57:16 2018
+        > File Name: Op.cpp
+        > Author: cryinlaugh
+        > Mail: cryinlaugh@gmail.com
+        > Created Time: 二 12/ 4 15:57:16 2018
  ************************************************************************/
 
 #include "Op.h"
@@ -62,13 +62,7 @@ void Op::checkValid(OpNode *node) {
     }
 }
 
-void Op::outTensorShapeGen(OpNode *node, size_t index, TensorShape *tShape) {
+void Op::outTensorTypeGen(OpNode *node, size_t index, Tensor *tensor) {
     TensorNode *inNode = (TensorNode *)node->getParentNode(0);
-    std::vector<size_t> shape;
-
-    TensorShape *inShape = inNode->getTensor()->getTensorShape();
-    for (int i = 0; i < inShape->getNDim(); i++) {
-        shape.push_back(inShape->getDim(i));
-    }
-    tShape->setShape(shape);
+    tensor->reset(inNode->getTensor()->getType());
 }

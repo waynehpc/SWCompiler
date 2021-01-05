@@ -1,8 +1,8 @@
 /*************************************************************************
-	> File Name: dlOp.h
-	> Author: cryinlaugh
-	> Mail: cryinlaugh@gmail.com
-	> Created Time: 二 12/ 4 15:57:29 2018
+        > File Name: dlOp.h
+        > Author: cryinlaugh
+        > Mail: cryinlaugh@gmail.com
+        > Created Time: 二 12/ 4 15:57:29 2018
  ************************************************************************/
 
 #ifndef _DLOP_H
@@ -42,7 +42,7 @@ class MatrixMatrixFCOp : public Op {
     void destroy(){};
 
     void checkValid(OpNode *node);
-    void outTensorShapeGen(OpNode *node, size_t index, TensorShape *tShape);
+    void outTensorTypeGen(OpNode *node, size_t index, Tensor *tensor) override;
     // for lowering
     void autoDiff(IRGraph *graph, IRNode *opNode,
                   std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
@@ -102,7 +102,7 @@ class MatrixMatrixFCBiasOp : public Op {
     void destroy(){};
 
     void checkValid(OpNode *node);
-    void outTensorShapeGen(OpNode *node, size_t index, TensorShape *tShape);
+    void outTensorTypeGen(OpNode *node, size_t index, Tensor *tensor) override;
     // for lowering
     void autoDiff(IRGraph *graph, IRNode *opNode,
                   std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
@@ -331,12 +331,12 @@ class MatrixAddOp : public Op {
 
 class ElementAddOp : public Op {
   public:
-    ElementAddOp() : Op(DL_OP, 2, 1, std::string("ElementAdd")) { }
+    ElementAddOp() : Op(DL_OP, 2, 1, std::string("ElementAdd")) {}
     ~ElementAddOp();
     void destroy(){};
     std::string getOpInfo() override;
     void setAttr(int ndim) override {
-      switch (ndim) {
+        switch (ndim) {
         case 1:
             this->setIONDims({1, 1}, {1});
             this->setEinReps({"a", "a", "a"});
@@ -353,21 +353,22 @@ class ElementAddOp : public Op {
             SWLOG_ERROR << "error, unimplemented io idims\n";
             exit(0);
             break;
-      }
+        }
     }
-    void setIONDims(std::initializer_list<int> indims, std::initializer_list<int> ondims) override {
-      for(auto ndim : indims) {
-        this->_inputNDims.push_back(ndim);
-      }
-      for(auto ndim : ondims) {
-        this->_outputNDims.push_back(ndim);
-      }
+    void setIONDims(std::initializer_list<int> indims,
+                    std::initializer_list<int> ondims) override {
+        for (auto ndim : indims) {
+            this->_inputNDims.push_back(ndim);
+        }
+        for (auto ndim : ondims) {
+            this->_outputNDims.push_back(ndim);
+        }
     }
     void setEinReps(std::initializer_list<std::string> reps) override {
-      this->_einOp = 1;
-      for(auto rep : reps) {
-        this->_einRep.push_back(rep);
-      }
+        this->_einOp = 1;
+        for (auto rep : reps) {
+            this->_einRep.push_back(rep);
+        }
     }
 
     void autoDiff(IRGraph *graph, IRNode *opNode,
@@ -396,7 +397,7 @@ class ElementMulOp : public Op {
         this->_einRep.push_back("bc"); // grad of input
     }
     ~ElementMulOp();
-    void destroy(){}
+    void destroy() {}
 };
 
 class ElementDivOp : public Op {
@@ -591,8 +592,7 @@ class Conv2dOp : public Op {
 
     std::string getOpInfo() override;
 
-    void outTensorShapeGen(OpNode *node, size_t index,
-                           TensorShape *tShape) override;
+    void outTensorTypeGen(OpNode *node, size_t index, Tensor *tensor) override;
 
     void autoDiff(IRGraph *graph, IRNode *opNode,
                   std::unordered_map<IRNode *, IRNode *> &gradNodeMap) override;
@@ -920,8 +920,7 @@ class MaxPoolOp : public Op {
 
     std::string getOpInfo() override;
 
-    void outTensorShapeGen(OpNode *node, size_t index,
-                           TensorShape *tShape) override;
+    void outTensorTypeGen(OpNode *node, size_t index, Tensor *tensor) override;
 
     void autoDiff(IRGraph *graph, IRNode *opNode,
                   std::unordered_map<IRNode *, IRNode *> &gradNodeMap) override;

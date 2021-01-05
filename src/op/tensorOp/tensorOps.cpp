@@ -38,7 +38,7 @@ void TensorDescendOp::autoDiff(
 
     auto *tensor = ((TensorNode *)input)->getTensor();
     auto *N = new TensorNode(input->name() + "_grad",
-                             new Tensor(tensor->getTensorShape()),
+                             new Tensor(tensor->getTensorXXShape()),
                              gradNodeMap[opNode]);
 
     SWLOG_DEBUG(4) << "get Gradient node for " << opNode->name() << " input "
@@ -67,7 +67,7 @@ void TensorAscendOp::autoDiff(
 
     auto *tensor = ((TensorNode *)input)->getTensor();
     auto *N = new TensorNode(input->name() + "_grad",
-                             new Tensor(tensor->getTensorShape()),
+                             new Tensor(tensor->getTensorXXShape()),
                              gradNodeMap[opNode]);
 
     SWLOG_DEBUG(4) << "get Gradient node for " << opNode->name() << " input "

@@ -27,7 +27,7 @@ void TensorNode::destroy() {
     // getLabel()->destroy();
     getTensor()->destroy();
     // _tilingLabel = nullptr;
-    if(_tilingLabel)
+    if (_tilingLabel)
         delete _tilingLabel;
     SWLOG_DEBUG(4) << "Destroy TensorNode: " << name() << "\n";
 }
@@ -43,7 +43,7 @@ TensorNode *TensorNode::clone() const {
     return tn;
 }
 
-// TensorShape can be globally shared
+// TensorXXShape can be globally shared
 // so we create new Tensor()
 // but point to the same tenorshape
 TensorNode *TensorNode::deepClone() const {
@@ -124,8 +124,8 @@ void TensorNode::autoDiff(IRGraph *graph,
 
         // generate new tensors
         auto *tensor = getTensor();
-        auto *N = new TensorNode(name() + "_grad",
-                                 new Tensor(tensor->getType()));
+        auto *N =
+            new TensorNode(name() + "_grad", new Tensor(tensor->getType()));
         tensor->setTensorInit(TensorInitType::CONSTANT, 0);
 
         // update information
@@ -155,9 +155,9 @@ void TensorNode::checkValid() {
                        << "acquire the tensor shape from upper op:"
                        << parent->name() << std::endl;
 
-        parent->outTensorShapeGen(i, this->getTensor()->getTensorShape());
+        parent->outTensorTypeGen(i, this->getTensor());
 
-        TensorShape *tshapeGen = this->getTensor()->getTensorShape();
+        TensorXXShape *tshapeGen = this->getTensor()->getTensorXXShape();
         std::stringstream ss;
         for (int i = 0; i < tshapeGen->getNDim(); i++) {
             ss << " " << tshapeGen->getDim(i) << " ";

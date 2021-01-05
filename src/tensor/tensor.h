@@ -8,24 +8,24 @@
 #ifndef _TENSOR_H
 #define _TENSOR_H
 
-#include "common.h"
 #include "SWLOG.h"
-#include <string>
-#include <iostream>
+#include "common.h"
 #include <cassert>
+#include <iostream>
+#include <string>
 
 namespace swc {
 
 constexpr size_t max_dimensions = 6;
 
-class TensorShape {
+class TensorXXShape {
   private:
     int _ndim;
     std::vector<size_t> *shape_;
 
   public:
-    TensorShape(std::vector<size_t> *shape);
-    TensorShape(const std::initializer_list<size_t> &shape) {
+    TensorXXShape(std::vector<size_t> *shape);
+    TensorXXShape(const std::initializer_list<size_t> &shape) {
         shape_ = new std::vector<size_t>();
         for (auto i : shape) {
             shape_->push_back(i);
@@ -33,100 +33,101 @@ class TensorShape {
         _ndim = shape_->size();
     }
 
-    ~TensorShape() {}
+    ~TensorXXShape() {}
     void destroy() {}
 
     int getNDim() const;
     size_t getDim(int idx) const;
     size_t size() const;
-    
-    void setShape(const std::vector<size_t>& shape) {
+
+    void setShape(const std::vector<size_t> &shape) {
         _ndim = shape.size();
         shape_->resize(_ndim);
         for (int i = 0; i < _ndim; i++)
             (*shape_)[i] = shape[i];
     };
 
-    std::vector<size_t> * getShape() {
-        return shape_;
-    }
+    std::vector<size_t> *getShape() { return shape_; }
 
-    TensorShape *
-    getShuffledTensorShape(const std::vector<size_t> &shuffle) const;
-    
-    TensorShape* getTiledShape( int index, int n);
+    TensorXXShape *
+    getShuffledTensorXXShape(const std::vector<size_t> &shuffle) const;
+
+    TensorXXShape *getTiledShape(int index, int n);
 };
 
 class TensorType {
-public:
+  public:
     TensorType() = default;
     TensorType(const std::initializer_list<size_t> &dims) {
         assert(dims.size() <= max_dimensions && "illegal dims.");
         numDims_ = dims.size();
         int idx = 0;
-        for(auto d :dims) {
+        for (auto d : dims) {
             shape_[idx++] = d;
         }
 
-        if(layout_ == mem_layout_t::layout_default && numDims_ == 4) {
+        if (layout_ == mem_layout_t::layout_default && numDims_ == 4) {
             layout_ = mem_layout_t::layout_nhwc;
         }
     }
 
-    TensorType(const std::initializer_list<size_t> &dims, DataType dtype, mem_layout_t layout) : 
-        dtype_(dtype), layout_(layout) { 
+    TensorType(const std::initializer_list<size_t> &dims, DataType dtype,
+               mem_layout_t layout)
+        : dtype_(dtype), layout_(layout) {
         assert(dims.size() <= max_dimensions && "illegal dims.");
         numDims_ = dims.size();
         int idx = 0;
-        for(auto d :dims) {
+        for (auto d : dims) {
             shape_[idx++] = d;
         }
 
-        if(layout_ == mem_layout_t::layout_default && numDims_ == 4) {
+        if (layout_ == mem_layout_t::layout_default && numDims_ == 4) {
             layout_ = mem_layout_t::layout_nhwc;
         }
     }
 
     TensorType(std::vector<size_t> *shape) {
         numDims_ = shape->size();
-        for(size_t i=0; i<shape->size(); i++) {
+        for (size_t i = 0; i < shape->size(); i++) {
             shape_[i] = shape->at(i);
-        }   
+        }
     }
 
-    TensorType(const std::vector<size_t> &shape, DataType dtype= DataType::Float_t, mem_layout_t layout=mem_layout_t::layout_default) :
-     dtype_(dtype), layout_(layout) {
+    TensorType(const std::vector<size_t> &shape,
+               DataType dtype = DataType::Float_t,
+               mem_layout_t layout = mem_layout_t::layout_default)
+        : dtype_(dtype), layout_(layout) {
         numDims_ = shape.size();
-        for(size_t i=0; i<shape.size(); i++) {
+        for (size_t i = 0; i < shape.size(); i++) {
             shape_[i] = shape.at(i);
-        }   
+        }
     }
 
     ~TensorType() = default;
 
     int numDims() const { return numDims_; }
     size_t getDim(int idx) const { return shape_[idx]; }
-    size_t size() const { 
+    size_t size() const {
         size_t s = 1;
-        for(int i=0; i<numDims_; i++) {
+        for (int i = 0; i < numDims_; i++) {
             s *= shape_[i];
         }
         return s;
     }
 
     size_t getSizeInBytes() const;
-    
+
     DataType getDataType() const { return dtype_; }
     void setMemLayout(mem_layout_t layout) { layout_ = layout; }
     mem_layout_t getMemLayout() const { return layout_; }
     std::string getMemLayoutTag() const;
 
-    TensorType getTiledTensorType( int index, int n);
+    TensorType getTiledTensorType(int index, int n);
 
-private:
+  private:
     size_t shape_[max_dimensions] = {0};
     int numDims_{0};
-    
+
     DataType dtype_{DataType::Float_t};
     mem_layout_t layout_{mem_layout_t::layout_default};
 };
@@ -157,7 +158,7 @@ class Tensor {
 
     // TODO: to be depreciated
     DataType dataType_;
-    TensorShape *shape_;
+    TensorXXShape *shape_;
     mem_layout_t mem_layout_;
 
     TensorInitType initType_;
@@ -172,24 +173,27 @@ class Tensor {
     }
 
     // to be depreciated
-    Tensor(TensorShape *shape, DataType dtype = DataType::Float_t, mem_layout_t layout = layout_default) {
+    Tensor(TensorXXShape *shape, DataType dtype = DataType::Float_t,
+           mem_layout_t layout = layout_default) {
         dataType_ = dtype;
         shape_ = shape;
         initType_ = TensorInitType::NONE;
 
-        if(layout == layout_default) {
+        if (layout == layout_default) {
             // this framework use NHWC memory layout for 4D Tensors by default
-            mem_layout_ = (shape_->getNDim() == 4) ? layout_nhwc : layout_default; 
+            mem_layout_ =
+                (shape_->getNDim() == 4) ? layout_nhwc : layout_default;
         } else {
-            mem_layout_ = layout; 
+            mem_layout_ = layout;
         }
 
         type_ = TensorType(shape_->getShape());
     }
 
     Tensor(const std::initializer_list<size_t> &shape,
-            DataType dtype = DataType::Float_t, mem_layout_t layout = layout_default) : 
-            type_(shape, dtype, layout) {
+           DataType dtype = DataType::Float_t,
+           mem_layout_t layout = layout_default)
+        : type_(shape, dtype, layout) {
 
         dataType_ = dtype;
         std::vector<size_t> *vec = new std::vector<size_t>();
@@ -197,128 +201,136 @@ class Tensor {
             int v = i;
             vec->push_back(v);
         }
-        shape_ = new TensorShape(vec);
+        shape_ = new TensorXXShape(vec);
         initType_ = TensorInitType::NONE;
 
-        if(layout == layout_default) {
+        if (layout == layout_default) {
             // this framework use NHWC memory layout for 4D Tensors by default
-            mem_layout_ = (shape_->getNDim() == 4) ? layout_nhwc : layout_default; 
+            mem_layout_ =
+                (shape_->getNDim() == 4) ? layout_nhwc : layout_default;
         } else {
-            mem_layout_ = layout; 
+            mem_layout_ = layout;
         }
     }
 
-    Tensor(const std::vector<size_t> &dims,
-            DataType dtype = DataType::Float_t, mem_layout_t layout = layout_default) : 
-            type_(dims, dtype, layout) {
+    Tensor(const std::vector<size_t> &dims, DataType dtype = DataType::Float_t,
+           mem_layout_t layout = layout_default)
+        : type_(dims, dtype, layout) {
 
         initType_ = TensorInitType::NONE;
 
         dataType_ = dtype;
 
         std::vector<size_t> *vec = new std::vector<size_t>(dims);
-        shape_ = new TensorShape(vec);
+        shape_ = new TensorXXShape(vec);
 
-        if(layout == layout_default) {
+        if (layout == layout_default) {
             // this framework use NHWC memory layout for 4D Tensors by default
-            mem_layout_ = (shape_->getNDim() == 4) ? layout_nhwc : layout_default; 
+            mem_layout_ =
+                (shape_->getNDim() == 4) ? layout_nhwc : layout_default;
         } else {
-            mem_layout_ = layout; 
+            mem_layout_ = layout;
         }
     }
 
-    Tensor(const TensorType &type) : 
-            type_(type) {
+    Tensor(const TensorType &type) : type_(type) {
 
         dataType_ = type.getDataType();
         std::vector<size_t> *vec = new std::vector<size_t>();
-        for (int i=0; i<type.numDims(); i++) {
+        for (int i = 0; i < type.numDims(); i++) {
             vec->push_back(type.getDim(i));
         }
-        shape_ = new TensorShape(vec);
+        shape_ = new TensorXXShape(vec);
         initType_ = TensorInitType::NONE;
 
         auto layout = type.getMemLayout();
-        if(layout == layout_default) {
+        if (layout == layout_default) {
             // this framework use NHWC memory layout for 4D Tensors by default
-            mem_layout_ = (shape_->getNDim() == 4) ? layout_nhwc : layout_default; 
+            mem_layout_ =
+                (shape_->getNDim() == 4) ? layout_nhwc : layout_default;
         } else {
-            mem_layout_ = layout; 
+            mem_layout_ = layout;
         }
     }
 
     Tensor(const Tensor &other) = delete;
     Tensor &operator=(const Tensor &other) = delete;
 
-    ~Tensor(){ destroy(); }
+    ~Tensor() { destroy(); }
 
-    void destroy() {
-        getTensorShape()->destroy();
-    }
+    void destroy() { getTensorXXShape()->destroy(); }
 
-    void reset(TensorShape *shape, DataType dtype = DataType::Float_t, mem_layout_t layout = layout_default) {
+    void reset(TensorXXShape *shape, DataType dtype = DataType::Float_t,
+               mem_layout_t layout = layout_default) {
         shape_ = shape;
         SWLOG_DEBUG(2) << "reset shape dims " << shape_->getNDim() << "\n";
         dataType_ = dtype;
 
-        if(layout == layout_default) {
+        if (layout == layout_default) {
             // this framework use NHWC memory layout for 4D Tensors by default
-            mem_layout_ = (shape_->getNDim() == 4) ? layout_nhwc : layout_default; 
+            mem_layout_ =
+                (shape_->getNDim() == 4) ? layout_nhwc : layout_default;
         } else {
-            mem_layout_ = layout; 
+            mem_layout_ = layout;
         }
     }
-    void reset(const std::initializer_list<size_t> &shape, DataType dtype = DataType::Float_t, mem_layout_t layout = layout_default) {
-        
+    void reset(const std::initializer_list<size_t> &shape,
+               DataType dtype = DataType::Float_t,
+               mem_layout_t layout = layout_default) {
+
         std::vector<size_t> *vec = new std::vector<size_t>();
         for (auto i : shape) {
             int v = i;
             vec->push_back(v);
         }
-        shape_ = new TensorShape(vec);
+        shape_ = new TensorXXShape(vec);
 
         SWLOG_DEBUG(2) << "reset shape dims " << shape_->getNDim() << "\n";
         dataType_ = dtype;
 
-        if(layout == layout_default) {
+        if (layout == layout_default) {
             // this framework use NHWC memory layout for 4D Tensors by default
-            mem_layout_ = (shape_->getNDim() == 4) ? layout_nhwc : layout_default; 
+            mem_layout_ =
+                (shape_->getNDim() == 4) ? layout_nhwc : layout_default;
         } else {
-            mem_layout_ = layout; 
+            mem_layout_ = layout;
         }
 
         type_ = TensorType(shape, dtype, layout);
     }
 
-    void reset(const TensorType& type) {
+    void reset(const TensorType &type) {
 
         type_ = type;
-        
+
         dataType_ = type.getDataType();
         std::vector<size_t> *vec = new std::vector<size_t>();
-        for (int i=0; i<type.numDims(); i++) {
+        for (int i = 0; i < type.numDims(); i++) {
             vec->push_back(type.getDim(i));
         }
-        shape_ = new TensorShape(vec);
+        shape_ = new TensorXXShape(vec);
         initType_ = TensorInitType::NONE;
 
         auto layout = type.getMemLayout();
-        if(layout == layout_default) {
+        if (layout == layout_default) {
             // this framework use NHWC memory layout for 4D Tensors by default
-            mem_layout_ = (shape_->getNDim() == 4) ? layout_nhwc : layout_default; 
+            mem_layout_ =
+                (shape_->getNDim() == 4) ? layout_nhwc : layout_default;
         } else {
-            mem_layout_ = layout; 
+            mem_layout_ = layout;
         }
     }
 
     Tensor *clone() const;
-    TensorShape *
-    getShuffledTensorShape(const std::vector<size_t> &shuffle) const;
-    std::vector<size_t> 
+    TensorXXShape *
+    getShuffledTensorXXShape(const std::vector<size_t> &shuffle) const;
+    std::vector<size_t>
     getShuffledDims(const std::vector<size_t> &shuffle) const;
     TensorType getShuffledTensorType(const std::vector<size_t> &shuffle) const;
 
-    TensorType getTiledTensorType( int idx, int n) { return type_.getTiledTensorType(idx, n); }
+    TensorType getTiledTensorType(int idx, int n) {
+        return type_.getTiledTensorType(idx, n);
+    }
 
     DataType getDataType() const { return dataType_; }
 
@@ -347,10 +359,10 @@ class Tensor {
     void setTraining(int train) { train_ = train; }
     int getTraining() const { return train_; }
 
-    TensorShape *getTensorShape() const { return shape_; }
+    TensorXXShape *getTensorXXShape() const { return shape_; }
     // size_t size() const { return shape_->size(); }
     // size_t getSizeInBytes() const;
-    
+
     TensorType getType() const { return type_; }
     size_t size() const { return type_.size(); }
     size_t getSizeInBytes() const { return type_.getSizeInBytes(); }
@@ -358,7 +370,7 @@ class Tensor {
     // void setMemLayout(mem_layout_t layout) { mem_layout_ = layout; }
     // mem_layout_t getMemLayout() const { return mem_layout_; }
     // std::string getMemLayoutTag() const;
-    void setMemLayout(mem_layout_t layout) { 
+    void setMemLayout(mem_layout_t layout) {
         mem_layout_ = layout;
         type_.setMemLayout(layout);
     }

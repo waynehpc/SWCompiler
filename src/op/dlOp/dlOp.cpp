@@ -65,7 +65,7 @@ void MatrixMatrixFCOp::checkValid(OpNode *node) {
         // LINKUPPER(des, data);
 
         // CTENSOR(datades, data->name()+"_desData", new
-        // TensorShape({dim2.first, dim2.second}), des);
+        // TensorXXShape({dim2.first, dim2.second}), des);
     }
     if (weight->getTensor()->getNDim() != 2) {
         std::cout << "FATAL ERROR: the FC weight dimension is not 2"
@@ -101,7 +101,7 @@ void MatrixMatrixFCBiasOp::checkValid(OpNode *node) {
         // LINKUPPER(des, data);
 
         // CTENSOR(datades, data->name()+"_desData", new
-        // TensorShape({dim2.first, dim2.second}), des);
+        // TensorXXShape({dim2.first, dim2.second}), des);
     }
     if (weight->getTensor()->getNDim() != 2) {
         std::cout << "FATAL ERROR: the FC weight dimension is not 2"
@@ -155,12 +155,11 @@ void MatrixSoftmaxWithLossOp::checkValid(OpNode *node) {
         std::vector<size_t> shape;
         shape.push_back(data->getTensor()->getDim(0));
         shape.push_back(data->getTensor()->getDim(1));
-        label->getTensor()->getTensorShape()->setShape(shape);
+        label->getTensor()->getTensorXXShape()->setShape(shape);
     }
 }
 
-void Conv2dOp::outTensorShapeGen(OpNode *node, size_t index,
-                                 TensorShape *tShape) {
+void Conv2dOp::outTensorTypeGen(OpNode *node, size_t index, Tensor *tensor) {
     std::vector<size_t> idims =
         ((TensorNode *)node->getParentNode(0))->getDims();
     std::vector<size_t> wdims =
@@ -182,11 +181,10 @@ void Conv2dOp::outTensorShapeGen(OpNode *node, size_t index,
     shape.push_back(ow);
     shape.push_back(wdims[0]);
 
-    tShape->setShape(shape);
+    tensor->reset(TensorType(shape));
 }
 
-void MaxPoolOp::outTensorShapeGen(OpNode *node, size_t index,
-                                  TensorShape *tShape) {
+void MaxPoolOp::outTensorTypeGen(OpNode *node, size_t index, Tensor *tensor) {
     std::vector<size_t> idims =
         ((TensorNode *)node->getParentNode(0))->getDims();
     std::vector<size_t> kernels = ((MaxPoolOp *)node->getOp())->getKernels();
@@ -206,11 +204,11 @@ void MaxPoolOp::outTensorShapeGen(OpNode *node, size_t index,
     shape.push_back(ow);
     shape.push_back(idims[3]);
 
-    tShape->setShape(shape);
+    tensor->reset(TensorType(shape));
 }
 
-void MatrixMatrixFCOp::outTensorShapeGen(OpNode *node, size_t index,
-                                         TensorShape *tShape) {
+void MatrixMatrixFCOp::outTensorTypeGen(OpNode *node, size_t index,
+                                        Tensor *tensor) {
     std::vector<size_t> idims =
         ((TensorNode *)node->getParentNode(0))->getDims();
     std::vector<size_t> wdims =
@@ -220,11 +218,11 @@ void MatrixMatrixFCOp::outTensorShapeGen(OpNode *node, size_t index,
     shape.push_back(idims[0]);
     shape.push_back(wdims[1]);
 
-    tShape->setShape(shape);
+    tensor->reset(TensorType(shape));
 }
 
-void MatrixMatrixFCBiasOp::outTensorShapeGen(OpNode *node, size_t index,
-                                             TensorShape *tShape) {
+void MatrixMatrixFCBiasOp::outTensorTypeGen(OpNode *node, size_t index,
+                                            Tensor *tensor) {
     std::vector<size_t> idims =
         ((TensorNode *)node->getParentNode(0))->getDims();
     std::vector<size_t> wdims =
@@ -234,5 +232,5 @@ void MatrixMatrixFCBiasOp::outTensorShapeGen(OpNode *node, size_t index,
     shape.push_back(idims[0]);
     shape.push_back(wdims[1]);
 
-    tShape->setShape(shape);
+    tensor->reset(TensorType(shape));
 }

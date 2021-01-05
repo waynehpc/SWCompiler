@@ -1,8 +1,8 @@
 /*************************************************************************
-	> File Name: Op.h
-	> Author: cryinlaugh 
-	> Mail: cryinlaugh@gmail.com 
-	> Created Time: 二 12/ 4 15:57:08 2018
+        > File Name: Op.h
+        > Author: cryinlaugh
+        > Mail: cryinlaugh@gmail.com
+        > Created Time: 二 12/ 4 15:57:08 2018
  ************************************************************************/
 
 #ifndef _OP_H
@@ -18,7 +18,7 @@ namespace swc {
 
 // Forward declarations
 class Tensor;
-class TensorShape;
+class TensorXXShape;
 class IRGraph;
 class IRNode;
 class OpNode;
@@ -96,8 +96,7 @@ class Op {
                          << std::endl;
     }
 
-    virtual void outTensorShapeGen(OpNode *node, size_t index,
-                                   TensorShape *tShape);
+    virtual void outTensorTypeGen(OpNode *node, size_t index, Tensor *tensor);
     /*
     Op *clone() const {
         return new Op(_opType, _nInput, _nOutput, _opClassName);
@@ -105,7 +104,8 @@ class Op {
     */
 
     virtual void setAttr(int ndim) {}
-    virtual void setIONDims(std::initializer_list<int> indims, std::initializer_list<int> ondims) {}
+    virtual void setIONDims(std::initializer_list<int> indims,
+                            std::initializer_list<int> ondims) {}
     inline int getInputDims(int n) { return _inputNDims[n]; }
     inline int getOutputDims(int n) { return _outputNDims[n]; }
 

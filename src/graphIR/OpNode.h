@@ -22,16 +22,17 @@ class StrategyLabel;
 class OpNode : public IRNode {
   public:
     OpNode() : op_(NULL){};
-    explicit OpNode(std::string name) : IRNode(OP_NODE, name){}
+    explicit OpNode(std::string name) : IRNode(OP_NODE, name) {}
     explicit OpNode(std::string name, Op *op)
-        : IRNode(OP_NODE, name), op_(op){}
+        : IRNode(OP_NODE, name), op_(op) {}
 
-    explicit OpNode(std::string name, Op *op, std::initializer_list<IRNode *> parents)
-        : IRNode(OP_NODE, name), op_(op) { 
-            for(auto &it : parents)
-                this->exlinkUpperNode(it);
-        }
-    
+    explicit OpNode(std::string name, Op *op,
+                    std::initializer_list<IRNode *> parents)
+        : IRNode(OP_NODE, name), op_(op) {
+        for (auto &it : parents)
+            this->exlinkUpperNode(it);
+    }
+
     ~OpNode(){};
 
     void destroy();
@@ -58,21 +59,26 @@ class OpNode : public IRNode {
         SWLOG_DEBUG(4) << "OpNode " << name() << " begin to autodiff"
                        << std::endl;
         setUpOpGradNode(graph, gradNodeMap);
-        setUpInputGradNode(graph, gradNodeMap);
+        setUpInputsGradNode(graph, gradNodeMap);
     }
 
-    void setUpOpGradNode(IRGraph *graph, std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
-    void setUpInputGradNode(IRGraph *graph, std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
-
+    void setUpOpGradNode(IRGraph *graph,
+                         std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
+    void
+    setUpInputsGradNode(IRGraph *graph,
+                        std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
+    void
+    createOrAddInputGrad(IRGraph *graph, int inputIdx,
+                         std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
     void checkValid() {
         Op *_op = op_;
         _op->checkValid(this);
         return;
     };
 
-    void outTensorShapeGen(size_t index, TensorShape *tShape) {
+    void outTensorTypeGen(size_t index, Tensor *tensor) {
         Op *_op = op_;
-        _op->outTensorShapeGen(this, index, tShape);
+        _op->outTensorTypeGen(this, index, tensor);
     };
 
     void genOutTensor() const;
