@@ -19,31 +19,31 @@ using namespace std;
 
 int main() {
     //============================
-	// Example of 2 FC layer:
-	// T:data0   T:weight0
-	// 	\       /
-	// 	\     /
-	// 	O:fc0 -- T:bias0
-	// 		|
-	// 	T:data1
-	// 		|
-	// 	O:tanh0
-	// 		|
-	// 	T:data2
-	// 				T:weight1a
-	// 	/	\       /
-	// /	 \     /
-	//fc1b      O:fc1a -- T:bias1a
-	// 	\			|
-	// 	T:data3b	T:data3a
-	// 		\		/	
-	// 		 O: add
-	// 			|
-	// 			data3
-	// 			|
-	// 		O: softmax
-	// 			|
-	// 		T:data4
+    // Example of 2 FC layer:
+    // T:data0   T:weight0
+    // 	\       /
+    // 	\     /
+    // 	O:fc0 -- T:bias0
+    // 		|
+    // 	T:data1
+    // 		|
+    // 	O:tanh0
+    // 		|
+    // 	T:data2
+    // 				T:weight1a
+    // 	/	\       /
+    // /	 \     /
+    // fc1b      O:fc1a -- T:bias1a
+    // 	\			|
+    // 	T:data3b	T:data3a
+    // 		\		/
+    // 		 O: add
+    // 			|
+    // 			data3
+    // 			|
+    // 		O: softmax
+    // 			|
+    // 		T:data4
     //=============================
 
     TENSOR(data0, MINIBATCH, 784);
@@ -75,7 +75,7 @@ int main() {
     GpT(mlp, data0, data1, data2, weight0, bias0);
     GpO(mlp, fc0, tanh0);
 
-	// ----------------------------------------------------------------
+    // ----------------------------------------------------------------
     TENSOR(weight1a, 0, 10);
     TENSOR(bias1a, 10);
     weight1a_Tensor->setTensorInit(TensorInitType::XAVIER, 512);
@@ -86,10 +86,10 @@ int main() {
     OP(fc1a, MatrixMatrixFCBiasOp);
     LINKUPPER(fc1a, data2, weight1a, bias1a);
 
-	TENSOR(data3a, 0);
+    TENSOR(data3a, 0);
     LINKUPPER(data3a, fc1a);
-	// ----------------------------------------------------------------
-	TENSOR(weight1b, 0, 10);
+    // ----------------------------------------------------------------
+    TENSOR(weight1b, 0, 10);
     TENSOR(bias1b, 10);
     weight1b_Tensor->setTensorInit(TensorInitType::XAVIER, 512);
     bias1b_Tensor->setTensorInit(TensorInitType::CONSTANT, 0);
@@ -102,16 +102,16 @@ int main() {
     TENSOR(data3b, 0);
     LINKUPPER(data3b, fc1b);
 
-	// ----------------------------------------------------------------
-	OP(add, ElementAddOp);
+    // ----------------------------------------------------------------
+    OP(add, ElementAddOp);
     LINKUPPER(add, data3a, data3b);
 
-	TENSOR(data3, 0);
+    TENSOR(data3, 0);
     LINKUPPER(data3, add);
-	// ----------------------------------------------------------------
-	GpT(mlp, weight1a, bias1a, data3a, weight1b, bias1b, data3b, data3);
+    // ----------------------------------------------------------------
+    GpT(mlp, weight1a, bias1a, data3a, weight1b, bias1b, data3b, data3);
     GpO(mlp, fc1a, fc1b, add);
-	// ----------------------------------------------------------------
+    // ----------------------------------------------------------------
 
     Tensor *labelt = new Tensor({MINIBATCH}, DataType::Int32_t);
     TensorNode *label = new TensorNode("selected", labelt);
@@ -168,4 +168,3 @@ int main() {
 
     return 0;
 }
-

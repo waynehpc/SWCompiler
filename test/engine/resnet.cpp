@@ -70,9 +70,9 @@ TensorNode *addFC(IRGraph *graph, std::string name, TensorNode *input,
     auto *b = createTensor(graph, {out_features}, name + "_b");
     w->setTraining(1);
     b->setTraining(1);
-    auto *conv = new OpNode(name, new MatrixMatrixFCBiasOp(), {input, w, b});
-    graph->pushOpNode(conv);
-    auto *output = createTensor(graph, conv, name + "_t");
+    auto *fc = new OpNode(name, new MatrixMatrixFCBiasOp(), {input, w, b});
+    graph->pushOpNode(fc);
+    auto *output = createTensor(graph, fc, name + "_t");
     return output;
 }
 
