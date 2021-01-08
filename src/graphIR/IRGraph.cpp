@@ -316,6 +316,7 @@ void IRGraph::initTensorNodes() {
                 }
 
                 else if (dynamic_cast<ReluOp *>(op) ||
+                         dynamic_cast<SigmoidOp *>(op) ||
                          dynamic_cast<LRNOp *>(op) ||
                          dynamic_cast<BatchNorm2dOp *>(op)) {
 
@@ -351,6 +352,16 @@ void IRGraph::initTensorNodes() {
                     auto *prob = (TensorNode *)node->getChildNode(0);
                     auto *loss = (TensorNode *)node->getChildNode(1);
                     prob->setTensor(new Tensor({idims[0], idims[1]}));
+                    loss->setTensor(new Tensor({1}));
+                }
+
+                else if (dynamic_cast<SigmoidCrossEntropyLossOp *>(op)) {
+                    auto *loss = (TensorNode *)node->getChildNode(0);
+                    loss->setTensor(new Tensor({1}));
+                }
+
+                else if (dynamic_cast<EuclideanLossOp *>(op)) {
+                    auto *loss = (TensorNode *)node->getChildNode(0);
                     loss->setTensor(new Tensor({1}));
                 }
 
@@ -644,9 +655,11 @@ IRGraph *IRGraph::clone() const {
             graph->addLogicalOutNodes(ops_map.at((OpNode *)node));
     }
     // clone _input_data_node and _input_label_node
-    if (_input_data_node && _input_data_node)
+    if (_input_data_node && _input_data_node) {
+
         graph->setTrainDataNodes(tensors_map.at(_input_label_node),
                                  tensors_map.at(_input_data_node));
+    }
 
     // clone _dispaly_nodes
     for (auto &node : _display_nodes) {
@@ -804,4 +817,161 @@ void IRGraph::setOpDevLabelByInput() {
     }
 }
 
+TensorNode *IRGraph::createTensor(std::string name, OpNode *parent) {
+    auto *tnode = new TensorNode(name, parent);
+    _tensors.push_back(tnode);
+    return tnode;
+}
+
+TensorNode *IRGraph::createTensor(std::string name, const DimList &dims,
+                                  DataType dtype, mem_layout_t layout) {
+    return createTensor(name, dims, nullptr, dtype, layout);
+}
+
+TensorNode *IRGraph::createTensor(std::string name, const DimList &dims,
+                                  OpNode *parent, DataType dtype,
+                                  mem_layout_t layout) {
+    auto *tnode = new TensorNode(name, dims, parent, dtype, layout);
+    _tensors.push_back(tnode);
+    return tnode;
+}
+
+TensorNode *IRGraph::createTensor(std::string name, const DimList &dims,
+                                  bool training, DataType dtype,
+                                  mem_layout_t layout) {
+    auto *tnode = createTensor(name, dims, nullptr, dtype, layout);
+    if (training) {
+        tnode->setTraining(1);
+    }
+    return tnode;
+}
+
+TensorNode *IRGraph::addOpAndCreateOutput(OpNode *N, std::string out_name) {
+    assert(N->getOp()->getnInput() == N->parentNum() &&
+           "verify failed: node linked inputs not equal to op defined inputs");
+    assert(N->getOp()->getnOutput() == 1 &&
+           "Cannot call this function for op with more than one output");
+    _ops.push_back(N);
+    if (out_name.empty())
+        out_name = N->name() + "_t";
+    return createTensor(out_name, N);
+}
+
+TensorNode *IRGraph::createConv2d(std::string name, TensorNode *input,
+                                  size_t filters, size_t kernel, size_t stride,
+                                  size_t padding) {
+    auto *w = createTensor(name + "_w", {filters, kernel, kernel, 0}, true);
+    auto *b = createTensor(name + "_b", {filters}, true);
+
+    std::vector<size_t> kernels{kernel, kernel};
+    std::vector<size_t> strides{stride, stride};
+    std::vector<size_t> paddings{padding, padding, padding, padding};
+    auto *conv = new OpNode(name, new Conv2dOp(kernels, strides, paddings),
+                            {input, w, b});
+    return addOpAndCreateOutput(conv);
+}
+
+TensorNode *IRGraph::createFC(std::string name, TensorNode *input,
+                              size_t out_features) {
+    auto *w = createTensor(name + "_w", {0, out_features}, true);
+    auto *b = createTensor(name + "_b", {out_features}, true);
+    auto *fc = new OpNode(name, new MatrixMatrixFCBiasOp(), {input, w, b});
+    return addOpAndCreateOutput(fc);
+}
+
+TensorNode *IRGraph::createMaxPool(std::string name, TensorNode *input,
+                                   size_t kernel, size_t stride,
+                                   size_t padding) {
+    std::vector<size_t> kernels{kernel, kernel};
+    std::vector<size_t> strides{stride, stride};
+    std::vector<size_t> paddings{padding, padding, padding, padding};
+    auto *pool =
+        new OpNode(name, new MaxPoolOp(kernels, strides, paddings), {input});
+    return addOpAndCreateOutput(pool);
+}
+
+TensorNode *IRGraph::createAvgPool(std::string name, TensorNode *input,
+                                   size_t kernel, size_t stride,
+                                   size_t padding) {
+    std::vector<size_t> kernels{kernel, kernel};
+    std::vector<size_t> strides{stride, stride};
+    std::vector<size_t> paddings{padding, padding, padding, padding};
+    auto *pool =
+        new OpNode(name, new AvgPoolOp(kernels, strides, paddings), {input});
+    return addOpAndCreateOutput(pool);
+}
+
+TensorNode *IRGraph::createBatchNorm2d(std::string name, TensorNode *input,
+                                       size_t num_features, float eps,
+                                       float momentum) {
+    auto *mean = createTensor(name + "_mean", {num_features});
+    auto *var = createTensor(name + "_var", {num_features});
+    auto *scale = createTensor(name + "_scale", {num_features});
+    auto *shift = createTensor(name + "_shift", {num_features});
+
+    auto *bn = new OpNode(name, new BatchNorm2dOp(eps, momentum),
+                          {input, mean, var, scale, shift});
+    return addOpAndCreateOutput(bn);
+}
+
+TensorNode *IRGraph::createLRN(std::string name, TensorNode *input) {
+    auto *lrn = new OpNode(name, new LRNOp(), {input});
+    return addOpAndCreateOutput(lrn);
+}
+
+TensorNode *IRGraph::createRelu(std::string name, TensorNode *input) {
+    auto *relu = new OpNode(name, new ReluOp(), {input});
+    return addOpAndCreateOutput(relu);
+}
+
+TensorNode *IRGraph::createSigmoid(std::string name, TensorNode *input) {
+    auto *relu = new OpNode(name, new SigmoidOp(), {input});
+    return addOpAndCreateOutput(relu);
+}
+
+TensorNode *IRGraph::createDropout(std::string name, TensorNode *input,
+                                   float ratio) {
+    auto *mask = createTensor(name + "_mask");
+    auto *drop = new OpNode(name, new DropoutOp(ratio), {input, mask});
+    return addOpAndCreateOutput(drop);
+}
+
+TensorNode *IRGraph::createElementAdd(std::string name, TensorNode *lhs,
+                                      TensorNode *rhs) {
+    auto *add = new OpNode(name, new ElementAddOp(), {lhs, rhs});
+    return addOpAndCreateOutput(add);
+}
+
+TensorNode *IRGraph::createElementMul(std::string name, TensorNode *lhs,
+                                      TensorNode *rhs) {
+    auto *mul = new OpNode(name, new ElementMulOp(), {lhs, rhs});
+    return addOpAndCreateOutput(mul);
+}
+
+TensorNode *IRGraph::createSoftmaxWithLoss(std::string name, TensorNode *input,
+                                           TensorNode *label) {
+    auto *sfm = new OpNode(name, new MatrixSoftmaxWithLossOp(), {input, label});
+    _ops.push_back(sfm);
+    auto *prob = createTensor("prob", sfm);
+    auto *loss = createTensor("loss", sfm);
+    (void)prob;
+    return loss;
+}
+
+TensorNode *IRGraph::createSigmoidCrossEntropyLoss(std::string name,
+                                                   TensorNode *input,
+                                                   TensorNode *label) {
+    auto *N = new OpNode(name, new SigmoidCrossEntropyLossOp(), {input, label});
+    _ops.push_back(N);
+    auto *loss = createTensor("loss", N);
+    return loss;
+}
+
+TensorNode *IRGraph::createEuclideanLoss(std::string name, TensorNode *input,
+                                         TensorNode *label) {
+    auto *N = new OpNode(name, new EuclideanLossOp(), {input, label});
+    _ops.push_back(N);
+    auto *loss = createTensor("loss", N);
+    return loss;
+}
 } // namespace swc

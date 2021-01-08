@@ -20,6 +20,8 @@ class TensorNode;
 class OpNode;
 class IRNode;
 
+using DimList = std::initializer_list<size_t>;
+
 /**
  * @brief IR Node Graph class
  */
@@ -179,6 +181,64 @@ class IRGraph {
     // we may set device label according to its input
     // mind that communication ops should be excluded
     void setOpDevLabelByInput();
+
+    TensorNode *createTensor(std::string name, OpNode *parent = nullptr);
+
+    TensorNode *createTensor(std::string name, const DimList &dims,
+                             DataType dtype = DataType::Float_t,
+                             mem_layout_t layout = layout_default);
+
+    TensorNode *createTensor(std::string name, const DimList &dims,
+                             OpNode *parent, DataType dtype = DataType::Float_t,
+                             mem_layout_t layout = layout_default);
+
+    TensorNode *createTensor(std::string name, const DimList &dims,
+                             bool training, DataType dtype = DataType::Float_t,
+                             mem_layout_t layout = layout_default);
+
+    TensorNode *addOpAndCreateOutput(OpNode *N,
+                                     std::string out_name = std::string());
+
+    TensorNode *createConv2d(std::string name, TensorNode *input,
+                             size_t filters, size_t kernel, size_t stride,
+                             size_t padding);
+
+    TensorNode *createFC(std::string name, TensorNode *input,
+                         size_t out_features);
+
+    TensorNode *createMaxPool(std::string name, TensorNode *input,
+                              size_t kernel, size_t stride, size_t padding);
+
+    TensorNode *createAvgPool(std::string name, TensorNode *input,
+                              size_t kernel, size_t stride, size_t padding);
+
+    TensorNode *createBatchNorm2d(std::string name, TensorNode *input,
+                                  size_t num_features, float eps = 1e-5,
+                                  float momentum = 0.1);
+    TensorNode *createLRN(std::string name, TensorNode *input);
+
+    TensorNode *createRelu(std::string name, TensorNode *input);
+
+    TensorNode *createSigmoid(std::string name, TensorNode *input);
+
+    TensorNode *createDropout(std::string name, TensorNode *input,
+                              float eps = 0.5);
+
+    TensorNode *createElementAdd(std::string name, TensorNode *lhs,
+                                 TensorNode *rhs);
+
+    TensorNode *createElementMul(std::string name, TensorNode *lhs,
+                                 TensorNode *rhs);
+
+    TensorNode *createSoftmaxWithLoss(std::string name, TensorNode *input,
+                                      TensorNode *label);
+
+    TensorNode *createSigmoidCrossEntropyLoss(std::string name,
+                                              TensorNode *input,
+                                              TensorNode *label);
+
+    TensorNode *createEuclideanLoss(std::string name, TensorNode *input,
+                                    TensorNode *label);
 
   private:
     std::vector<TensorNode *> _tensors;

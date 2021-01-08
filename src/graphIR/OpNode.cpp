@@ -73,6 +73,8 @@ void OpNode::setUpInputsGradNode(
     }
 
     if (dynamic_cast<op::MatrixSoftmaxWithLossOp *>(op_) ||
+        dynamic_cast<op::SigmoidCrossEntropyLossOp *>(op_) ||
+        dynamic_cast<op::EuclideanLossOp *>(op_) ||
         dynamic_cast<op::DropoutOp *>(op_)) {
         /**
          * 1a. softmaxwithloss in(input, label) out(prob, loss)
