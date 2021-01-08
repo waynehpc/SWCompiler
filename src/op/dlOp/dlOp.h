@@ -229,7 +229,6 @@ class MatrixSoftmaxWithLossOp : public Op {
     };
     ~MatrixSoftmaxWithLossOp();
     void checkValid(OpNode *node);
-    void destroy(){};
     void autoDiff(IRGraph *graph, IRNode *opNode,
                   std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
 };
@@ -243,8 +242,67 @@ class MatrixSoftmaxWithLossGradOp : public Op {
         this->_einRep.push_back("n_"); // origin out
         this->_einRep.push_back("n_"); // grad of input
     };
-    ~MatrixSoftmaxWithLossGradOp();
-    void destroy() {}
+    ~MatrixSoftmaxWithLossGradOp() = default;
+};
+
+class SigmoidCrossEntropyLossOp : public Op {
+  public:
+    SigmoidCrossEntropyLossOp()
+        : Op(DL_OP, 2, 1, std::string("SigmoidrossEntropy")) {
+        this->_inputNDims.push_back(2);
+        this->_inputNDims.push_back(2);
+        this->_outputNDims.push_back(1);
+
+        this->_einOp = 1;
+        this->_einRep.push_back("i_"); // input
+        this->_einRep.push_back("i_"); // label
+        this->_einRep.push_back(
+            "_"); // loss scalar // error, should not reduce, but mean...
+    }
+    ~SigmoidCrossEntropyLossOp() = default;
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
+};
+
+class SigmoidCrossEntropyLossGradOp : public Op {
+  public:
+    SigmoidCrossEntropyLossGradOp()
+        : Op(DL_OP, 2, 1, std::string("SigmoidCrossEntropyLossGrad")) {
+        this->_einOp = 1;
+        this->_einRep.push_back("i_"); // origin input
+        this->_einRep.push_back("i_"); // origin label
+        this->_einRep.push_back("i_"); // grad of input
+    }
+    ~SigmoidCrossEntropyLossGradOp() = default;
+};
+class EuclideanLossOp : public Op {
+  public:
+    EuclideanLossOp() : Op(DL_OP, 2, 1, std::string("SigmoidrossEntropy")) {
+        this->_inputNDims.push_back(2);
+        this->_inputNDims.push_back(2);
+        this->_outputNDims.push_back(1);
+
+        this->_einOp = 1;
+        this->_einRep.push_back("i_"); // input
+        this->_einRep.push_back("i_"); // label
+        this->_einRep.push_back(
+            "_"); // loss scalar // error, should not reduce, but mean...
+    }
+    ~EuclideanLossOp() = default;
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
+};
+
+class EuclideanLossGradOp : public Op {
+  public:
+    EuclideanLossGradOp()
+        : Op(DL_OP, 2, 1, std::string("SigmoidCrossEntropyLossGrad")) {
+        this->_einOp = 1;
+        this->_einRep.push_back("i_"); // origin input
+        this->_einRep.push_back("i_"); // origin label
+        this->_einRep.push_back("i_"); // grad of input
+    }
+    ~EuclideanLossGradOp() = default;
 };
 
 class DropoutOp : public Op {
@@ -927,6 +985,41 @@ class ReluGradOp : public Op {
         this->_einRep.push_back("bhwc");
     }
     ~ReluGradOp();
+    void destroy() {}
+};
+
+class SigmoidOp : public Op {
+  public:
+    SigmoidOp() : Op(DL_OP, 1, 1, std::string("Sigmoid")) {
+        this->_inputNDims.push_back(4);
+        this->_outputNDims.push_back(4);
+
+        this->_einOp = 1;
+        this->_einRep.push_back("bh"); // in
+        this->_einRep.push_back("bh"); // out
+    }
+    ~SigmoidOp();
+    void destroy() {}
+    void autoDiff(IRGraph *graph, IRNode *opNode,
+                  std::unordered_map<IRNode *, IRNode *> &gradNodeMap);
+};
+
+class SigmoidGradOp : public Op {
+  public:
+    SigmoidGradOp() : Op(DL_OP, 3, 1, std::string("SigmoidGrad")) {
+        this->_inputNDims.push_back(4);
+        this->_inputNDims.push_back(4);
+        this->_inputNDims.push_back(4);
+        this->_outputNDims.push_back(4);
+
+        this->_einOp = 1;
+        this->_einRep.push_back("bh"); // in
+        this->_einRep.push_back("bh"); // out
+        this->_einRep.push_back("bh"); // outGrad
+
+        this->_einRep.push_back("bh"); // inGrad
+    }
+    ~SigmoidGradOp();
     void destroy() {}
 };
 

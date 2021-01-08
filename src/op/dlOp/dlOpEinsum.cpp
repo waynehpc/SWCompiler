@@ -229,7 +229,8 @@ void MatrixMatrixFCBiasOp::einsumLowering(IRGraph *graph, IRNode *node) {
 }
 
 void MatrixMatrixFCBiasGradOp::einsumLowering(IRGraph *graph, IRNode *node) {
-    SWLOG_DEBUG(10) << "einsumLowering MatrixMatrixFCBiasGradOp ..." << std::endl;
+    SWLOG_DEBUG(10) << "einsumLowering MatrixMatrixFCBiasGradOp ..."
+                    << std::endl;
     // std::endl; for (int i = 0; i < node->parentNum(); i++) {
     //     std::cout << node->getParentNode(i)->name() << std::endl;
     // }
@@ -255,8 +256,7 @@ void MatrixMatrixFCBiasGradOp::einsumLowering(IRGraph *graph, IRNode *node) {
     // may be we tanspose W again, we can optimize tanspose-transpose
     COP(op_w_t, "op_" + weight->name() + "_T", MatrixTransposeOp, weight);
 
-    Tensor *wt =
-        new Tensor(weight->getTensor()->getShuffledTensorType({1, 0}));
+    Tensor *wt = new Tensor(weight->getTensor()->getShuffledTensorType({1, 0}));
     auto w_trans = new TensorNode(weight->name() + "_T", wt, op_w_t);
 
     auto dx = new OpNode(node->name() + "_dx_mm", new MatrixMatrixMulOp());

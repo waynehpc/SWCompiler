@@ -1,8 +1,8 @@
 /*************************************************************************
-	> File Name: dlOp.cpp
-	> Author: cryinlaugh
-	> Mail: cryinlaugh@gmail.com
-	> Created Time: 二 12/ 4 15:57:35 2018
+        > File Name: dlOp.cpp
+        > Author: cryinlaugh
+        > Mail: cryinlaugh@gmail.com
+        > Created Time: 二 12/ 4 15:57:35 2018
  ************************************************************************/
 
 #include "dlOp.h"
@@ -74,6 +74,21 @@ void ReluOp::autoDiff(IRGraph *graph, IRNode *opNode,
     auto *outputGrad = gradNodeMap[output];
 
     auto *N = new OpNode(opNode->name() + "_grad", new ReluGradOp());
+    N->exlinkUpperNode(input, output, outputGrad);
+
+    gradNodeMap[opNode] = N;
+    graph->pushOpNode(N);
+}
+
+void SigmoidOp::autoDiff(IRGraph *graph, IRNode *opNode,
+                         std::unordered_map<IRNode *, IRNode *> &gradNodeMap) {
+    SWLOG_DEBUG(4) << "autoDiff: " << _opClassName << std::endl;
+    auto *input = opNode->getParentNode(0);
+    auto *output = opNode->getChildNode(0);
+    assert(gradNodeMap.count(output) && "grad of Sigmoid output unfound\n");
+    auto *outputGrad = gradNodeMap[output];
+
+    auto *N = new OpNode(opNode->name() + "_grad", new SigmoidGradOp());
     N->exlinkUpperNode(input, output, outputGrad);
 
     gradNodeMap[opNode] = N;
@@ -179,6 +194,42 @@ void MatrixSoftmaxWithLossOp::autoDiff(
     graph->pushOpNode(N);
 }
 
+void SigmoidCrossEntropyLossOp::autoDiff(
+    IRGraph *graph, IRNode *opNode,
+    std::unordered_map<IRNode *, IRNode *> &gradNodeMap) {
+    SWLOG_DEBUG(4) << "autoDiff: " << _opClassName << std::endl;
+    auto *input = opNode->getParentNode(0);
+    auto *label = opNode->getParentNode(1);
+
+    // auto *loss = opNode->getChildNode(0);
+    // assert(gradNodeMap.count(loss) && "grad of EculideanLoss output
+    // unfound\n");
+
+    auto *N = new OpNode(opNode->name() + "_grad",
+                         new SigmoidCrossEntropyLossGradOp(), {input, label});
+
+    gradNodeMap[opNode] = N;
+    graph->pushOpNode(N);
+}
+
+void EuclideanLossOp::autoDiff(
+    IRGraph *graph, IRNode *opNode,
+    std::unordered_map<IRNode *, IRNode *> &gradNodeMap) {
+    SWLOG_DEBUG(4) << "autoDiff: " << _opClassName << std::endl;
+    auto *input = opNode->getParentNode(0);
+    auto *label = opNode->getParentNode(1);
+
+    // auto *loss = opNode->getChildNode(0);
+    // assert(gradNodeMap.count(loss) && "grad of EculideanLoss output
+    // unfound\n");
+
+    auto *N = new OpNode(opNode->name() + "_grad", new EuclideanLossGradOp(),
+                         {input, label});
+
+    gradNodeMap[opNode] = N;
+    graph->pushOpNode(N);
+}
+
 void Conv2dOp::autoDiff(IRGraph *graph, IRNode *opNode,
                         std::unordered_map<IRNode *, IRNode *> &gradNodeMap) {
     SWLOG_DEBUG(4) << "autoDiff: " << _opClassName << std::endl;
@@ -233,8 +284,9 @@ void Conv2dWithActivationOp::autoDiff(
     graph->pushOpNode(N);
 }
 
-void BatchNorm2dOp::autoDiff(IRGraph *graph, IRNode *opNode,
-                     std::unordered_map<IRNode *, IRNode *> &gradNodeMap) {
+void BatchNorm2dOp::autoDiff(
+    IRGraph *graph, IRNode *opNode,
+    std::unordered_map<IRNode *, IRNode *> &gradNodeMap) {
     SWLOG_DEBUG(4) << "autoDiff: " << _opClassName << std::endl;
     auto *input = opNode->getParentNode(0);
     auto *mean = opNode->getParentNode(1);
@@ -243,7 +295,7 @@ void BatchNorm2dOp::autoDiff(IRGraph *graph, IRNode *opNode,
     auto *shift = opNode->getParentNode(4);
 
     auto *output = opNode->getChildNode(0);
-    
+
     assert(gradNodeMap.count(output) && "grad of BatchNorm2d output unfound\n");
     auto *outputGrad = gradNodeMap[output];
 
@@ -251,7 +303,8 @@ void BatchNorm2dOp::autoDiff(IRGraph *graph, IRNode *opNode,
     auto eps = bn->getEpsilon();
     auto momentum = bn->getMomentum();
 
-    auto *N = new OpNode(opNode->name() + "_grad", new BatchNorm2dGrad(eps, momentum));
+    auto *N = new OpNode(opNode->name() + "_grad",
+                         new BatchNorm2dGrad(eps, momentum));
     N->exlinkUpperNode(input, mean, var, scale, shift, outputGrad);
 
     gradNodeMap[opNode] = N;
@@ -291,15 +344,16 @@ void DropoutOp::autoDiff(IRGraph *graph, IRNode *opNode,
     graph->pushOpNode(N);
 }
 
-void ElementAddOp::autoDiff(IRGraph *graph, IRNode *opNode,
-                     std::unordered_map<IRNode *, IRNode *> &gradNodeMap) {
+void ElementAddOp::autoDiff(
+    IRGraph *graph, IRNode *opNode,
+    std::unordered_map<IRNode *, IRNode *> &gradNodeMap) {
     SWLOG_DEBUG(4) << "autoDiff: " << _opClassName << std::endl;
     auto *lhs = opNode->getParentNode(0);
     auto *rhs = opNode->getParentNode(1);
     auto *output = opNode->getChildNode(0);
     assert(gradNodeMap.count(output) && "grad of ElementAdd output unfound\n");
     auto *outputGrad = gradNodeMap[output];
-    
+
     // TODO fix potential bug when lhs grad already exists
     gradNodeMap[lhs] = outputGrad;
     gradNodeMap[rhs] = outputGrad;
