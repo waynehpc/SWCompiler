@@ -1,5 +1,5 @@
 /**********************************************
-  > File Name		: testRNN.cpp
+  > File Name		: naiveRNN.cpp
   > Author			: wwz
   > Mail			: wumz17@163.com
   > Created Time	: 2021年01月05日 星期二 14时53分07秒
