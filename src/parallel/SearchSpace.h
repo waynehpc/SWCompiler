@@ -212,8 +212,17 @@ class StrategySearchSpace {
     }
 
     void addStrategyToGraph(std::vector<int> identity) {
-        std::cout
-            << "----------selected strategy by op out---------------------\n";
+        std::cout << "----------selected strategy---------------------\n";
+        std::cout << std::left << std::setw(3) << "idx"
+                  << " " << std::left << std::setw(15) << "name"
+                  << " " << std::left << std::setw(3) << "in"
+                  << " " << std::left << std::setw(3) << "out"
+                  << " " << std::left << std::setw(15) << "in0 "
+                  << " " << std::left << std::setw(4) << "stgy"
+                  << " " << std::left << std::setw(15) << "out0"
+                  << " " << std::left << std::setw(4) << "stgy"
+                  << "\n";
+
         int opIndex = 0;
         for (auto op_strategy_idx : identity) {
             std::vector<int> opStrategy =
@@ -225,11 +234,15 @@ class StrategySearchSpace {
             opIndex++;
 
             std::cout << std::left << std::setw(3) << opIndex << " "
-                      << std::left << std::setw(3)
-                      << opStrategy.at(opNode->parentNum()) << " " << std::left
+                      << std::left << std::setw(15) << opNode->name() << " "
+                      << std::left << std::setw(3) << opNode->parentNum() << " "
+                      << std::left << std::setw(3) << opNode->childNum() << " "
+                      << std::left << std::setw(15)
+                      << opNode->getParentNode(0)->name() << " " << std::left
+                      << std::setw(4) << opStrategy.at(0) << " " << std::left
                       << std::setw(15) << opNode->getChildNode(0)->name() << " "
-                      << std::left << std::setw(15) << opNode->name()
-                      << " children " << opNode->childNum() << "\n";
+                      << std::left << std::setw(4)
+                      << opStrategy.at(opNode->parentNum()) << "\n";
         }
     }
 
