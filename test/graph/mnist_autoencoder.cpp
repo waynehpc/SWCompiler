@@ -14,25 +14,25 @@ using namespace swc::pass;
 using namespace std;
 
 #define MINIBATCH 32
-#define PARA_DEGREE 4
+#define PARA_DEGREE 16 
 
 int main() {
     auto *autoencoder = new IRGraph();
 
     auto *data = autoencoder->createTensor("data", {MINIBATCH, 784});
 
-    auto *x = autoencoder->createFC("enc1", data, 1000);
+    auto *x = autoencoder->createFC("enc1", data, 1024);
     x = autoencoder->createSigmoid("enc1act", x);
-    x = autoencoder->createFC("enc2", x, 500);
+    x = autoencoder->createFC("enc2", x, 512);
     x = autoencoder->createSigmoid("enc2act", x);
-    x = autoencoder->createFC("enc3", x, 250);
+    x = autoencoder->createFC("enc3", x, 256);
     x = autoencoder->createSigmoid("enc3act", x);
-    x = autoencoder->createFC("enc4", x, 30);
-    x = autoencoder->createFC("dec4", x, 250);
+    x = autoencoder->createFC("enc4", x, 32);
+    x = autoencoder->createFC("dec4", x, 256);
     x = autoencoder->createSigmoid("dec4act", x);
-    x = autoencoder->createFC("dec3", x, 500);
+    x = autoencoder->createFC("dec3", x, 512);
     x = autoencoder->createSigmoid("dec3act", x);
-    x = autoencoder->createFC("dec2", x, 1000);
+    x = autoencoder->createFC("dec2", x, 1024);
     x = autoencoder->createSigmoid("dec2act", x);
     x = autoencoder->createFC("dec1", x, 784);
 
@@ -81,24 +81,24 @@ int main() {
     config.enable_lowering = false;
 
     /* about parallel strategy*/
-    // config.force_data_parallel = true;
-    config.geneticalgo_opt_parallel = true;
+    config.force_data_parallel = true;
+    // config.geneticalgo_opt_parallel = true;
     // config.handcraft_parallel = true;
 
     // optimzer
     config.decentralized_optimizer = true;
-    config.use_ring_allreduce = true;
+    // config.use_ring_allreduce = true;
 
     autoencoder->setConfig(config);
     std::cout << "autoencoder_b" << MINIBATCH << "_p" << config.mpi_size
               << "\n";
 
-    svgGen(autoencoder, "autoencoder.dot");
+    // svgGen(autoencoder, "autoencoder.dot");
 
     Engine engine(autoencoder);
     engine.compile();
 
-    svgGen(autoencoder, "autoencoder_train.dot");
+    // svgGen(autoencoder, "autoencoder_train.dot");
 
     cout << autoencoder->getCommTrace() << "\n";
     cout << autoencoder->getCommCost() << "\n";
