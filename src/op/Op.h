@@ -18,7 +18,6 @@ namespace swc {
 
 // Forward declarations
 class Tensor;
-class TensorXXShape;
 class IRGraph;
 class IRNode;
 class OpNode;

@@ -9,44 +9,29 @@
 
 namespace swc {
 
-TensorXXShape::TensorXXShape(std::vector<size_t> *shape) {
-    _ndim = shape->size();
-    shape_ = shape;
-}
-
-int TensorXXShape::getNDim() const { return _ndim; }
-
-size_t TensorXXShape::getDim(int idx) const { return (*shape_)[idx]; }
-
-size_t TensorXXShape::size() const {
-    size_t size = 1;
-    for (auto dim : *shape_)
-        size *= dim;
-    return size;
-}
-
-TensorXXShape *TensorXXShape::getShuffledTensorXXShape(
-    const std::vector<size_t> &shuffle) const {
-    std::vector<size_t> *shape = new std::vector<size_t>();
-    for (auto idx : shuffle) {
-        if (idx < shape_->size())
-            shape->push_back(shape_->at(idx));
+void TensorType::initDimsAndLayout(const std::initializer_list<size_t> &dims) {
+    assert(dims.size() <= max_dimensions && "illegal dims.");
+    numDims_ = dims.size();
+    int idx = 0;
+    for (auto d : dims) {
+        shape_[idx++] = d;
     }
 
-    return new TensorXXShape(shape);
+    if (layout_ == mem_layout_t::layout_default && numDims_ == 4) {
+        layout_ = mem_layout_t::layout_nhwc;
+    }
 }
 
-TensorXXShape *TensorXXShape::getTiledShape(int index, int n) {
-    int ndim = getNDim();
-    std::vector<size_t> *tileVector = new std::vector<size_t>();
-    for (int i = 0; i < ndim; i++) {
-        if (i == index)
-            tileVector->push_back(getDim(i) / n);
-        else
-            tileVector->push_back(getDim(i));
+TensorType::TensorType(const std::initializer_list<size_t> &dims) {
+    initDimsAndLayout(dims);
+}
+
+size_t TensorType::size() const {
+    size_t s = 1;
+    for (int i = 0; i < numDims_; i++) {
+        s *= shape_[i];
     }
-    TensorXXShape *result = new TensorXXShape(tileVector);
-    return result;
+    return s;
 }
 
 TensorType TensorType::getTiledTensorType(int idx, int n) {
@@ -83,10 +68,17 @@ size_t TensorType::getSizeInBytes() const {
 }
 
 Tensor *Tensor::clone() const {
-    Tensor *t = new Tensor(shape_, dataType_);
+    Tensor *t = new Tensor(type_);
     t->setTraining(train_);
     t->setTensorInit(initType_, initInfo_);
     return t;
+}
+
+const std::vector<size_t> Tensor::getDims() const {
+    std::vector<size_t> dims(getNDim(), 0);
+    for (int i = 0; i < getNDim(); i++)
+        dims[i] = getDim(i);
+    return dims;
 }
 
 void Tensor::setTensorInit(TensorInitType type, float value) {
@@ -122,32 +114,6 @@ void Tensor::setTensorInit(TensorInitType type, TensorInitInfo info) {
     initInfo_ = info;
 }
 
-// size_t Tensor::getSizeInBytes() const {
-//     switch (dataType_) {
-//     case DataType::Float_t:
-//         return shape_->size() * sizeof(float);
-//     case DataType::Double_t:
-//         return shape_->size() * sizeof(double);
-//     case DataType::Int8_t:
-//         return shape_->size() * sizeof(int8_t);
-//     case DataType::Int32_t:
-//         return shape_->size() * sizeof(int32_t);
-//     default:
-//         SWLOG_ERROR << "UNKNOWN DataType\n";
-//         return shape_->size() * sizeof(float);
-//     }
-// }
-
-TensorXXShape *
-Tensor::getShuffledTensorXXShape(const std::vector<size_t> &shuffle) const {
-    std::vector<size_t> *shape = new std::vector<unsigned long>();
-    for (auto idx : shuffle) {
-        if ((int)idx < shape_->getNDim())
-            shape->push_back(shape_->getDim(idx));
-    }
-
-    return new TensorXXShape(shape);
-}
 std::vector<size_t>
 Tensor::getShuffledDims(const std::vector<size_t> &shuffle) const {
     std::vector<size_t> dims;

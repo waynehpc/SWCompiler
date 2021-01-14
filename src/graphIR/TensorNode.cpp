@@ -23,10 +23,6 @@ using namespace swc::pass;
 namespace swc {
 
 void TensorNode::destroy() {
-    // printf("free TensorNode:%s\n", name().c_str());
-    // getLabel()->destroy();
-    getTensor()->destroy();
-    // _tilingLabel = nullptr;
     if (_tilingLabel)
         delete _tilingLabel;
     SWLOG_DEBUG(4) << "Destroy TensorNode: " << name() << "\n";
@@ -43,7 +39,7 @@ TensorNode *TensorNode::clone() const {
     return tn;
 }
 
-// TensorXXShape can be globally shared
+// TensorXXXShape can be globally shared
 // so we create new Tensor()
 // but point to the same tenorshape
 TensorNode *TensorNode::deepClone() const {
@@ -157,10 +153,10 @@ void TensorNode::checkValid() {
 
         parent->outTensorTypeGen(i, this->getTensor());
 
-        TensorXXShape *tshapeGen = this->getTensor()->getTensorXXShape();
+        TensorType tshapeGen = this->getTensor()->getType();
         std::stringstream ss;
-        for (int i = 0; i < tshapeGen->getNDim(); i++) {
-            ss << " " << tshapeGen->getDim(i) << " ";
+        for (int i = 0; i < tshapeGen.numDims(); i++) {
+            ss << " " << tshapeGen.getDim(i) << " ";
         }
         SWLOG_DEBUG(4) << "Infer tensor shape by:" << ss.str() << std::endl;
     }

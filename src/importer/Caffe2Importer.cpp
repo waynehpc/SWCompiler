@@ -91,31 +91,6 @@ static std::vector<size_t> inferConvOutDims(size_t ih, size_t iw,
     return {oh, ow};
 }
 
-// replaced by Tensor::getShuffledTensorXXShape(...)
-// static std::vector<size_t> inferTransOutDims(std::vector<size_t> &idims,
-//                                              std::vector<size_t> &shuffle) {
-//     // TODO check illegal shuffle index
-//     std::vector<size_t> odims;
-//     for (auto idx : shuffle) {
-//         if (idx < idims.size())
-//             odims.push_back(idims.at(idx));
-//     }
-//     return odims;
-// }
-
-// static std::string getNodeName(std::string oldName) {
-//     assert(!oldName.empty() && "inputName empty");
-//     std::string name;
-//     for (const char c : oldName) {
-//         if (c == '/' || c == '.' || c == '-')
-//             name.push_back('_');
-//         else
-//             name.push_back(c);
-//     }
-//
-//     return name;
-// }
-
 Caffe2Importer::Caffe2Importer(IRGraph *g, const std::string &netProtoFile,
                                const std::string &tensorProtoFile,
                                std::vector<TensorNode *> &udef_nodes) {
@@ -271,7 +246,6 @@ void Caffe2Importer::loadOp(const caffe2::OperatorDef &op) {
         opNode->exlinkUpperNode(data, scale, bias, mean, var);
 
         std::string res_name = op.output(0);
-        // auto *tshape = data->getTensor()->getTensorXXShape();
         auto *out_tnode = new TensorNode(
             res_name, new Tensor(data->getTensor()->getType()), opNode);
         name_tNode_map_[res_name] = out_tnode;
@@ -291,7 +265,6 @@ void Caffe2Importer::loadOp(const caffe2::OperatorDef &op) {
             auto *tensor = name_tNode_map_[res_name]->getTensor();
             out_tnode = new TensorNode(res_name, tensor, opNode);
         } else {
-            // auto *tshape = in->getTensor()->getTensorXXShape();
             out_tnode = new TensorNode(
                 res_name, new Tensor(in->getTensor()->getType()), opNode);
         }
@@ -312,7 +285,6 @@ void Caffe2Importer::loadOp(const caffe2::OperatorDef &op) {
             auto *tensor = name_tNode_map_[res_name]->getTensor();
             out_tnode = new TensorNode(res_name, tensor, opNode);
         } else {
-            // auto *tshape = lhs->getTensor()->getTensorXXShape();
             out_tnode = new TensorNode(
                 res_name, new Tensor(lhs->getTensor()->getType()), opNode);
         }
@@ -440,7 +412,6 @@ void Caffe2Importer::loadOp(const caffe2::OperatorDef &op) {
         LINKUPPER(opNode, in);
 
         std::string res_name = op.output(0);
-        // auto *tshape = in->getTensor()->getTensorXXShape();
         auto *out_tnode = new TensorNode(
             res_name, new Tensor(in->getTensor()->getType()), opNode);
         name_tNode_map_[res_name] = out_tnode;

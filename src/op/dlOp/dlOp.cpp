@@ -60,12 +60,6 @@ void MatrixMatrixFCOp::checkValid(OpNode *node) {
         SWLOG_DEBUG(5) << "Decend the high dimension tensor data"
                        << " from " << data->getTensor()->getNDim() << " to 2 {"
                        << dim2.first << ", " << dim2.second << "}" << std::endl;
-
-        // COP(des, data->name()+"_des", TensorDescendOp, 4, 2, 4);
-        // LINKUPPER(des, data);
-
-        // CTENSOR(datades, data->name()+"_desData", new
-        // TensorXXShape({dim2.first, dim2.second}), des);
     }
     if (weight->getTensor()->getNDim() != 2) {
         std::cout << "FATAL ERROR: the FC weight dimension is not 2"
@@ -96,12 +90,6 @@ void MatrixMatrixFCBiasOp::checkValid(OpNode *node) {
         SWLOG_DEBUG(5) << "Decend the high dimension tensor data"
                        << " from " << data->getTensor()->getNDim() << " to 2 {"
                        << dim2.first << ", " << dim2.second << "}" << std::endl;
-
-        // COP(des, data->name()+"_des", TensorDescendOp, 4, 2, 4);
-        // LINKUPPER(des, data);
-
-        // CTENSOR(datades, data->name()+"_desData", new
-        // TensorXXShape({dim2.first, dim2.second}), des);
     }
     if (weight->getTensor()->getNDim() != 2) {
         std::cout << "FATAL ERROR: the FC weight dimension is not 2"
@@ -146,16 +134,12 @@ void MatrixSoftmaxWithLossOp::checkValid(OpNode *node) {
         abort();
     }
     if (label->getTensor()->getNDim() != 2) {
-
+        auto dim0 = data->getTensor()->getDim(0);
+        auto dim1 = data->getTensor()->getDim(1);
         SWLOG_DEBUG(5) << "Reshape  label tensor dimension"
-                       << " to data input dimension{"
-                       << data->getTensor()->getDim(0) << ", "
-                       << data->getTensor()->getDim(1) << "}" << std::endl;
-
-        std::vector<size_t> shape;
-        shape.push_back(data->getTensor()->getDim(0));
-        shape.push_back(data->getTensor()->getDim(1));
-        label->getTensor()->getTensorXXShape()->setShape(shape);
+                       << " to data input dimension{" << dim0 << ", " << dim1
+                       << "}" << std::endl;
+        label->getTensor()->reset({dim0, dim1});
     }
 }
 
