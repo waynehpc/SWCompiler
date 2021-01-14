@@ -103,11 +103,11 @@ int main() {
 
     Config config;
     config.train_mode = true;
-    // config.mpi = true;
-    // config.mpi_size = 4;
-    config.sproc_mgpu = true;
-    config.cuda = true;
-    config.ngpus_per_rank = 8;
+    config.mpi = true;
+    config.mpi_size = 4;
+    // config.sproc_mgpu = true;
+    // config.cuda = true;
+    // config.ngpus_per_rank = 8;
 
     config.train_config.optimizer = "sgd";
     config.train_config.train_data_file = "mnist_labels_images.bin";
@@ -130,7 +130,7 @@ int main() {
     config.enable_lowering = false;
 
     // config.force_data_parallel = true;
-    // config.geneticalgo_opt_parallel = true;
+    config.geneticalgo_opt_parallel = true;
     // config.handcraft_parallel = true;
 
     // optimzer

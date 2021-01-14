@@ -249,9 +249,9 @@ void IRGraph::initTensorNodes() {
                     << "init tensornodes of op " << node->name() << " "
                     << "parent " << node->parentNum() << " child "
                     << node->childNum() << "\n";
-                std::cout << op->getOpInfo() << "\n";
-                std::cout << ((TensorNode *)node->getParentNode(0))->toString()
-                          << "\n";
+                // std::cout << op->getOpInfo() << "\n";
+                // std::cout << ((TensorNode *)node->getParentNode(0))->toString()
+                //           << "\n";
 
                 if (dynamic_cast<ElementAddOp *>(op) ||
                     dynamic_cast<ElementSubOp *>(op) ||
