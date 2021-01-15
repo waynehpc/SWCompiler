@@ -23,8 +23,7 @@ int main() {
     cout << data0_Tensor->getSizeInBytes() << endl;
     cout << int(data0_Tensor->getDataType()) << endl;
 
-    data0_Tensor->reset({8, 64}, DataType::Double_t,
-                        mem_layout_t::layout_default);
+    data0_Tensor->reset({8, 64}, DataType::Double_t, layout_default);
     cout << data0_Tensor->size() << endl;
     cout << data0_Tensor->getSizeInBytes() << endl;
     cout << int(data0_Tensor->getDataType()) << endl;

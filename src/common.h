@@ -1,43 +1,29 @@
 /*************************************************************************
-	> File Name: common.h
-	> Author: cryinlaugh
-	> Mail: cryinlaugh@gmail.com
-	> Created Time: Tue 04 Dec 2018 08:09:21 AM UTC
+        > File Name: common.h
+        > Author: cryinlaugh
+        > Mail: cryinlaugh@gmail.com
+        > Created Time: Tue 04 Dec 2018 08:09:21 AM UTC
  ************************************************************************/
 
 #ifndef _COMMON_H
 #define _COMMON_H
 
-#include <memory>
-#include <vector>
-#include <string>
-#include <map>
 #include <climits>
+#include <map>
+#include <memory>
 #include <sstream>
+#include <string>
+#include <vector>
 
 enum class DataType { Float_t, Double_t, Int8_t, Int32_t };
 
 // TODO: remove SLICE, TILING and Use case
-enum ParallelStrategy { 
-    SLICE, 
-    TILING,  
-    MEM_SAVING,
-    COMM_SAVING
-};
+enum ParallelStrategy { SLICE, TILING, MEM_SAVING, COMM_SAVING };
 
-enum BytesProto {
-    ONE_BYTE_AS_INT,
-    FOUR_BYTES_AS_FLOAT
-};
+enum BytesProto { ONE_BYTE_AS_INT, FOUR_BYTES_AS_FLOAT };
 
 // enum type may not be enough for description
-enum NetTopology {
-    FC_MESH_NET, 
-    STAR_NET,
-    RING_NET,
-    TREE_NET
-};
-
+enum NetTopology { FC_MESH_NET, STAR_NET, RING_NET, TREE_NET };
 
 struct TrainingConfig {
     std::string optimizer;
@@ -57,7 +43,6 @@ struct TrainingConfig {
     BytesProto data_bytes{FOUR_BYTES_AS_FLOAT};
     std::string train_data_file;
     size_t train_data_samples{0};
-
 };
 
 struct Config {
@@ -86,16 +71,15 @@ struct Config {
     size_t dataloader_samples{0};
     size_t display{0};
 
-
     // for parallel strategy selection
-    ParallelStrategy parallel_preference{MEM_SAVING}; 
+    ParallelStrategy parallel_preference{MEM_SAVING};
     bool force_data_parallel{false};
     bool handcraft_parallel{false};
     bool geneticalgo_opt_parallel{false};
 
     bool enable_lowering{true};
 
-    // comment compute function calls to get pure communication time 
+    // comment compute function calls to get pure communication time
     bool compute_op_annotation{false};
     bool comm_op_annotation{false};
 
@@ -104,7 +88,7 @@ struct Config {
 
     NetTopology net_topo{FC_MESH_NET};
 
-    // if true, distributed [sgd or whatever] optimizer 
+    // if true, distributed [sgd or whatever] optimizer
     bool decentralized_optimizer{false};
     bool use_ring_allreduce{false};
 };
@@ -123,7 +107,7 @@ enum NodeType { TENSOR_NODE, OP_NODE };
 //     UNKNOWN = -1
 // };
 
-typedef enum {
+enum mem_layout_t : int {
     layout_default = 0,
 
     // for tensors
@@ -131,27 +115,20 @@ typedef enum {
     layout_nhwc,
     layout_nc,
     layout_cn
-} mem_layout_t;
+};
 
-const std::map<int, std::string> MEM_LAYOUT = {{layout_default, "default"},
-    {layout_nchw, "nchw"},
-    {layout_nhwc, "nhwc"},
-    {layout_nc, "nc"},
-    {layout_cn, "cn"},
+const std::map<int, std::string> MEM_LAYOUT = {
+    {layout_default, "default"}, {layout_nchw, "nchw"}, {layout_nhwc, "nhwc"},
+    {layout_nc, "nc"},           {layout_cn, "cn"},
 };
 
 const std::map<std::string, std::string> dtype_mkldnn_datatype_map = {
-    {"float", "memory::data_type::f32"},
-    {"int", "memory::data_type::s32"}
-};
+    {"float", "memory::data_type::f32"}, {"int", "memory::data_type::s32"}};
 
 const std::map<std::string, std::string> layout_mkldnn_format_tag_map = {
-    {"nhwc", "memory::format_tag::nhwc"},
-    {"nchw", "memory::format_tag::nchw"},
-    {"nc", "memory::format_tag::nc"},
-    {"cn", "memory::format_tag::cn"},
-    {"x", "memory::format_tag::x"},
-    {"xy", "memory::format_tag::nc"},
+    {"nhwc", "memory::format_tag::nhwc"}, {"nchw", "memory::format_tag::nchw"},
+    {"nc", "memory::format_tag::nc"},     {"cn", "memory::format_tag::cn"},
+    {"x", "memory::format_tag::x"},       {"xy", "memory::format_tag::nc"},
 };
 
 enum class TensorInitType { NONE, CONSTANT, ZERO, XAVIER, FILE, PARENTOP };
@@ -163,19 +140,20 @@ struct Device {
     int rank{0};
     DeviceType type;
     int id{0};
-    Device(int r = 0, DeviceType t = DeviceType::CPU, int i = 0) : rank{r}, type(t), id(i) {}
+    Device(int r = 0, DeviceType t = DeviceType::CPU, int i = 0)
+        : rank{r}, type(t), id(i) {}
     friend bool operator==(const Device &x, const Device &y) {
         return x.rank == y.rank && x.type == y.type && x.id == y.id;
     }
-    std::string toString() const { 
+    std::string toString() const {
         std::ostringstream os;
         if (type == DeviceType::CPU) {
-            if(rank == INT_MAX)
+            if (rank == INT_MAX)
                 os << "cpup";
             else
                 os << "cpu" << id;
         } else if (type == DeviceType::GPU) {
-            if(id == INT_MAX)
+            if (id == INT_MAX)
                 os << "gpup";
             else
                 os << "gpu" << id;

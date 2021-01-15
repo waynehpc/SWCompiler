@@ -17,8 +17,8 @@ void TensorType::initDimsAndLayout(const std::initializer_list<size_t> &dims) {
         shape_[idx++] = d;
     }
 
-    if (layout_ == mem_layout_t::layout_default && numDims_ == 4) {
-        layout_ = mem_layout_t::layout_nhwc;
+    if (layout_ == layout_default && numDims_ == 4) {
+        layout_ = layout_nhwc;
     }
 }
 

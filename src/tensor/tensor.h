@@ -38,7 +38,7 @@ class TensorType {
 
     TensorType(const std::vector<size_t> &shape,
                DataType dtype = DataType::Float_t,
-               mem_layout_t layout = mem_layout_t::layout_default)
+               mem_layout_t layout = layout_default)
         : dtype_(dtype), layout_(layout) {
         numDims_ = shape.size();
         for (size_t i = 0; i < shape.size(); i++) {
@@ -66,7 +66,7 @@ class TensorType {
     int numDims_{0};
 
     DataType dtype_{DataType::Float_t};
-    mem_layout_t layout_{mem_layout_t::layout_default};
+    mem_layout_t layout_{layout_default};
 
     void initDimsAndLayout(const std::initializer_list<size_t> &dims);
 };
